@@ -4,47 +4,12 @@ import h5py
 import numpy as np
 from rich import print
 from scipy.optimize import linear_sum_assignment, minimize
-import scipy.linalg
 from sklearn.preprocessing import MinMaxScaler
-import matplotlib.pyplot as plt
-import os
 import solver
 
 
 eV2Ha = 0.0367492929
 cache = {}  # For speedup during mulitiple ED during model optimization
-
-
-def norm_distance_matrix(
-    ai_df: pd.DataFrame, model_descriptors: dict, matches: list[str], scaler=None
-) -> np.array:
-    """
-    Inputs:
-        matches : List of descriptor names as strings
-    Could include in the future, weights : the weight of each descriptor.
-
-    Returns:
-        nstates_ai by nstates_model estimation of the distance
-    """
-    nai = len(ai_df)
-    nmodel = model_descriptors[matches[0]].shape[0]
-    distance = np.zeros((nai, nmodel))
-
-    for k in matches:
-        scaler_model = scaler.fit(ai_df[k].values.reshape(-1, 1))  # If scaler present
-        xai = scaler_model.transform(ai_df[k].values.reshape(-1, 1))[
-            :, 0
-        ]  # If scaler present
-        # xai = ai_df[k].values # No scaler
-        scaler_model = scaler.fit(
-            model_descriptors[k].reshape(-1, 1)
-        )  # If scaler present
-        xmodel = scaler_model.transform(model_descriptors[k].reshape(-1, 1))[
-            :, 0
-        ]  # If scaler present
-        # xmodel = (model_descriptors[k]) # If no scaler
-        distance += (xai[:, np.newaxis] - xmodel[np.newaxis, :]) ** 2  # euclidean
-    return distance
 
 
 def descriptor_distance(
@@ -80,69 +45,11 @@ def descriptor_distance(
     return distance
 
 
-def distance_matrix(
-    ai_df: pd.DataFrame, model_descriptors: dict, matches: list[str]
-) -> np.array:
-    """
-    Inputs:
-        matches : List of descriptor names as strings
-    Could include in the future, weights : the weight of each descriptor.
-
-    Returns:
-        nstates_ai by nstates_model estimation of the distance
-    """
-    nai = len(ai_df)
-    nmodel = model_descriptors[matches[0]].shape[0]
-    distance = np.zeros((nai, nmodel))
-
-    for k in matches:
-        xai = ai_df[k].values
-        xmodel = model_descriptors[k]
-        distance += (xai[:, np.newaxis] - xmodel[np.newaxis, :]) ** 2  # euclidean
-    return distance
-
-
-def spectrum_loss(energy_ab, energy_m_mapped):
-    sloss = np.sum((energy_ab - energy_m_mapped) ** 2) / energy_ab.shape[0]  # MSE
-    return sloss
-
-
-def spectrum_loss_abs(energy_ab, energy_m_mapped):
-    sloss = (
-        np.sum(np.abs(energy_ab - energy_m_mapped)) / energy_ab.shape[0]
-    )  # Abs difference # Don't think I need this, this is an unusual metric to use
-    return sloss
-
-
-def descriptor_distance_loss(distance, row_ind, col_ind, N):
-    dloss = np.sum(distance[row_ind, col_ind]) / N
-    return dloss
-
-
 def unmapped_penalty(energy_m_unmapped, max_energy_ab: float, norm):
     penalty = np.sum(
         (np.maximum(0, max_energy_ab - energy_m_unmapped) ** 2) / norm["energy"]
     )
     return penalty
-
-
-def rotation_from_angles(thetas, N):
-    inds = np.triu_indices(N, k=1)
-
-    T = np.zeros((N, N))
-    T[inds[0], inds[1]] = thetas
-    T = T - T.T
-    return scipy.linalg.expm(T)
-
-
-# ^ Fix later, need to apply mask to the resulting array for specific states
-
-
-def temp_from_beta(beta):
-    # beta units Ha, the energy unit for the ab initio
-    k_b = 3.166811563e-6  # Units Ha/K
-    temp = 1 / k_b * beta
-    return temp  # K
 
 
 def give_boltzmann_weights(energy_ab, beta):
@@ -152,18 +59,6 @@ def give_boltzmann_weights(energy_ab, beta):
     e_i = energy_ab[0]
     boltzmann_weights = np.exp(-beta * (energy_ab - e_i))
     return boltzmann_weights
-
-
-def plot_distance(distance, name="test_dist.png", label="distance"):
-
-    plt.imshow(distance)
-    plt.ylabel("ab initio #")
-    plt.xlabel("model #")
-    plt.colorbar(label=label)
-    plt.savefig(name)
-    plt.close()
-
-    return
 
 
 def evaluate_loss_overall(
@@ -185,7 +80,7 @@ def evaluate_loss_overall(
     w_1 = weights[1]
     lamb = weights[2]
 
-    if fcivec is None and 'fcivec' in cache:
+    if fcivec is None and "fcivec" in cache:
         fcivec = cache["fcivec"]
 
     params = pd.Series(params, index=keys)
@@ -215,11 +110,21 @@ def evaluate_loss_overall(
         w_0 * sloss + w_1 * dloss + w_0 * (penalty**2) + lamb * np.sum(np.abs(params))
     )
 
-    return {'loss': loss, 'sloss': sloss, 'dloss': dloss, 'penalty': penalty}
+    return {
+        "loss": loss,
+        "sloss": sloss,
+        "dloss": dloss,
+        "penalty": penalty,
+        "descriptors": descriptors,
+        "distance": distance,
+        "row_ind": row_ind,
+        "col_ind": col_ind,
+        "params": params,
+    }
 
 
 def optimize_function(*args, **kwargs):
-    return evaluate_loss_overall(*args, **kwargs)['loss']
+    return evaluate_loss_overall(*args, **kwargs)["loss"]
 
 
 def mapping(
@@ -237,7 +142,7 @@ def mapping(
 ):
     """
 
-    Inputs: 
+    Inputs:
     onebody: dict (keys are strings, values are 2D np.arrays) tij
     twobody: dict (keys are strings, values are 4D np.arrays) Vijkl
     onebody_params: list of strings, keys that are allowed to have nonzero values in the Hamiltonian
@@ -293,7 +198,7 @@ def mapping(
             None,
             norm,
         ),
-        jac='3-point',
+        jac="3-point",
         method="Powell",
         tol=1e-7,
         options={"maxiter": 1000},
@@ -304,11 +209,22 @@ def mapping(
     print("function value", xmin.fun)
     print("parameters", xmin.x)
 
-    data = evaluate_loss_overall(xmin.x, keys, weights, boltzmann_weights, onebody, twobody, ai_df, nroots, matches, scaler, None, norm)
+    data = evaluate_loss_overall(
+        xmin.x,
+        keys,
+        weights,
+        boltzmann_weights,
+        onebody,
+        twobody,
+        ai_df,
+        nroots,
+        matches,
+        scaler,
+        None,
+        norm,
+    )
 
     with h5py.File(outfile, "w") as f:
-        for k in descriptors:
-            f["descriptors/" + k] = descriptors[k][...]
         for k in onebody_params + twobody_params:
             f["dmd_params/" + k] = dmd.params[k]
         for k in onebody_params + twobody_params:
@@ -320,78 +236,11 @@ def mapping(
         f["ai_spectrum_range (Ha)"] = np.max(ai_df["energy"]) - np.min(ai_df["energy"])
 
         for k in data:
-            f[k] = data[k]
+            if k == "descriptors":
+                for kk in data[k]:
+                    f[k + "/" + kk] = data[k][kk]
+            else:
+                f[k] = data[k]
 
         f["iterations"] = xmin.nit
         f["termination_message"] = xmin.message
-
-
-def set_up_h4(
-    named_terms,
-    ai_descriptors,
-    model_descriptors,
-    nroots,
-    onebody_params,
-    twobody_params,
-    minimum_1s_occupation=3.7,
-    w_0=1,
-    beta=0,
-    lamb=0,
-    guess_params=None,
-):
-    onebody = {}
-    twobody = {}
-    onebody_keys = []
-    twobody_keys = []
-    with h5py.File(named_terms, "r") as f:
-        for k in f["onebody"].keys():
-            onebody[k] = f[f"onebody/{k}"][()]
-            onebody_keys.append(k)
-        for k in f["twobody"].keys():
-            twobody[k] = f[f"twobody/{k}"][:]
-            twobody_keys.append(k)
-    ai_df = pd.read_csv(ai_descriptors)
-    ai_df = ai_df[ai_df.E0 > minimum_1s_occupation]
-    ai_df = ai_df[
-        ai_df.U < 1.3
-    ]  # Need to remove the top two states from the optimization
-    # df=df[:30]
-
-    # print(df.shape)
-
-    matches = onebody_keys[1:] + twobody_keys  # ['t', 'U' , 'ni_hop'] #'V'
-
-    w_1 = 1 - w_0
-
-    weights = [w_0, w_1, lamb]  # w_0, w_1, lamb
-
-    mapping(
-        onebody,
-        twobody,
-        onebody_params,
-        twobody_params,
-        ai_df,
-        nroots,
-        model_descriptors,
-        matches,
-        weights,
-        beta,
-        guess_params,
-    )
-
-
-if __name__ == "__main__":
-    onebody_params = ["E0", "t"]
-    twobody_params = ["U"]  
-    set_up_h4(
-        "../h4_data/named_terms_new.hdf5",
-        "../h4_data/ai_descriptors.csv",
-        "model_output.hdf5",
-        nroots=30,
-        onebody_params=onebody_params,
-        twobody_params=twobody_params,
-        minimum_1s_occupation=3.7,
-        w_0=0.6,
-        beta=4.0,
-        lamb=0,
-    )  

@@ -64,7 +64,7 @@ def run_tu():
         "../h4_data/named_terms_new.hdf5",
         "../h4_data/ai_descriptors.csv",
         "model_output.hdf5",
-        nroots=30,
+        nroots=36, # (4 sites choose 2 electrons)^2 , ^2 is for both spin up and spin down
         onebody_params=onebody_params,
         twobody_params=twobody_params,
         minimum_1s_occupation=3.7,
@@ -81,7 +81,7 @@ def test_lamb_with_lots_parameters():
         "../h4_data/named_terms_new.hdf5",
         "../h4_data/ai_descriptors.csv",
         "model_output.hdf5",
-        nroots=30,
+        nroots=36, 
         onebody_params=onebody_params,
         twobody_params=twobody_params,
         minimum_1s_occupation=3.7,

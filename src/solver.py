@@ -72,7 +72,7 @@ def eff_model_solver(h1, h2, norb=4, nelec=(2, 2), nroots=36, ci0: np.ndarray = 
         max_space=30,
         max_cycle=100,
         orbsym=None,
-        davidson_only=True,
+        davidson_only=False, # TODO: compare timing to fci solver, once davidson solver bug in pyscf is solved 
         ci0=ci0,
     )  # These two can help speed up the solver
 

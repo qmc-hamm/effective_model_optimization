@@ -224,6 +224,9 @@ def mapping(
         norm,
     )
 
+    print("Spectrum loss:", data['sloss'])
+    print("Descriptor loss:", data['dloss'])
+
     with h5py.File(outfile, "w") as f:
         for k in onebody_params + twobody_params:
             f["dmd_params/" + k] = dmd.params[k]

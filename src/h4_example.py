@@ -16,6 +16,36 @@ def set_up_h4(
     lamb=0,
     guess_params=None,
 ):
+    """_summary_
+
+    Parameters
+    ----------
+    named_terms : _type_
+        _description_
+    ai_descriptors : pd.DataFrame
+        The descriptor information of the ab initio data. The keys should match model descriptors'. ab initio data, columns are parameter names, and 'energy'
+    model_descriptors : str
+        Which output file to save the model data to.
+    nroots : int
+        Number of eigenstates to solve the model Hamiltonian for. number of roots to solve for in the model
+    onebody_params : list
+        List of onebody keys which are the parameters to set inside the hamiltonian. list of strings, keys that are 
+        allowed to have nonzero values in the Hamiltonian
+    twobody_params : list
+        List of twobody keys which are the parameters to set inside the hamiltonian. list of strings, keys that are 
+        allowed to have nonzero values in the Hamiltonian
+    minimum_1s_occupation : float, optional
+        Sets the cut of the ai_descriptors to only include states with this minimum 1s occupancy, by default 3.7
+    w_0 : int, optional
+        Weighting of the spectrum loss. The descriptor loss is weighted as 1-w0. by default 1
+    beta : float, optional
+        inverse temperature for the boltzmann weights. 0 means equal weights to all states, by default 0
+    lamb : int, optional
+        The penalty loss for parameters, by default 0
+    guess_params : pd.Series, optional
+        Guess parameters to override the DMD parameters if so desired. dict (keys are strings, values are floats) 
+        overrides the dmd parameters, by default None
+    """
     onebody = {}
     twobody = {}
     onebody_keys = []
@@ -29,12 +59,7 @@ def set_up_h4(
             twobody_keys.append(k)
     ai_df = pd.read_csv(ai_descriptors)
     ai_df = ai_df[ai_df.E0 > minimum_1s_occupation]
-    ai_df = ai_df[
-        ai_df.U < 1.3
-    ]  # Need to remove the top two states from the optimization
-    # df=df[:30]
-
-    # print(df.shape)
+    ai_df = ai_df[ ai_df.U < 1.3]  # Need to remove the top two states from the optimization
 
     matches = onebody_keys[1:] + twobody_keys  # ['t', 'U' , 'ni_hop'] #'V'
 
@@ -58,6 +83,8 @@ def set_up_h4(
 
 
 def run_tu():
+    """Run optimization of the TU model.
+    """
     onebody_params = ["E0", "t"]
     twobody_params = ["U"]  
     set_up_h4(
@@ -75,6 +102,8 @@ def run_tu():
 
 
 def test_lamb_with_lots_parameters():
+    """Testing using lambda penalty loss for the solver.
+    """
     onebody_params = ["E0", "t"]
     twobody_params = ["U",'V', 'J','J_diag','hop_hop', 'hop_hop2', 'ni_hop', 'ni_hop2']  
     set_up_h4(

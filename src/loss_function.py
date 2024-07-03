@@ -312,8 +312,6 @@ def mapping(
     with h5py.File(outfile, "w") as f:
         for k in onebody_params + twobody_params:
             f["dmd_params/" + k] = dmd.params[k]
-        for k in onebody_params + twobody_params:
-            f["rdmd_params/" + k] = params[k]
         f["para_w_0"] = weights[0]
         f["para_w_1"] = weights[1]
         f["para_lamb"] = weights[2]
@@ -324,6 +322,9 @@ def mapping(
             if k == "descriptors":
                 for kk in data[k]:
                     f[k + "/" + kk] = data[k][kk]
+            elif k == "params":
+                for i, kk in enumerate(onebody_params + twobody_params):
+                    f["rdmd_params/" + kk] = data[k][i]
             else:
                 f[k] = data[k]
 

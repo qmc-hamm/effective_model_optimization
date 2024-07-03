@@ -41,7 +41,6 @@ def eff_model_trans_solver(h1, h2, norb=4, nelec=(2, 2), nroots=36):
     n_rdm1s = np.zeros((nroots, nroots, 2, norb, norb))
     n_rdm2s = np.zeros((nroots, nroots, 4, norb, norb, norb, norb))
     for root1 in range(nroots):
-        # rdm1s, rdm2s =  fci.direct_spin1.make_rdm12s(fcivec[root1], norb=norb, nelec=nelec)
         for root2 in range(nroots):
             rdm1s, rdm2s = fci.direct_spin1.trans_rdm12s(
                 fcivec[root1], fcivec[root2], norb=norb, nelec=nelec
@@ -84,7 +83,7 @@ def solve_effective_trans_hamiltonian(
     for k in twobody.keys():
         if k in parameters.keys():
             h2 += parameters[k] * twobody[k]
-            # Changed
+
     h_eff_energies, h_eff_fcivec, rdm1, rdm2 = eff_model_trans_solver(
         h1, h2, norb=norb, nelec=(2, 2), nroots=nroots
     )
@@ -145,7 +144,7 @@ def eff_model_solver(h1, h2, norb=4, nelec=(2, 2), nroots=36, ci0: np.ndarray = 
         orbsym=None,
         davidson_only=False, # TODO: compare timing to fci solver, once davidson solver bug in pyscf is solved 
         ci0=ci0,
-    )  # These two can help speed up the solver
+    )  # These davidson_only and ci0 can help speed up the solver
 
     n_rdm1s = np.zeros((nroots, 2, norb, norb))
     n_rdm2s = np.zeros((nroots, 4, norb, norb, norb, norb))
@@ -195,12 +194,9 @@ def solve_effective_hamiltonian(
         h1, h2, norb=norb, nelec=(2, 2), nroots=nroots, ci0=ci0
     )
 
-    # print('lengths of fcivec ',len(h_eff_energies), len(h_eff_fcivec[0]))
-
     descriptors = {}
     descriptors["energy"] = h_eff_energies
     for k, it in onebody.items():
-        # print(it.shape, rdm1.shape)
         descriptors[k] = np.einsum("mn,ismn -> i", it, rdm1)
     for k, it in twobody.items():
         descriptors[k] = np.einsum(

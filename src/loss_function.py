@@ -6,8 +6,6 @@ from rich import print
 from scipy.optimize import linear_sum_assignment, minimize
 import solver
 
-
-eV2Ha = 0.0367492929
 cache = {}  # For speedup during mulitiple ED during model optimization
 
 
@@ -95,7 +93,7 @@ def give_boltzmann_weights(energy_ab, beta):
     return boltzmann_weights
 
 
-def evaluate_loss_overall(
+def evaluate_loss(
     params: np.ndarray,
     keys,
     weights,
@@ -193,7 +191,7 @@ def evaluate_loss_overall(
 
 
 def optimize_function(*args, **kwargs):
-    return evaluate_loss_overall(*args, **kwargs)["loss"]
+    return evaluate_loss(*args, **kwargs)["loss"]
 
 
 def mapping(
@@ -294,7 +292,7 @@ def mapping(
     print("function value", xmin.fun)
     print("parameters", xmin.x)
 
-    data = evaluate_loss_overall(
+    data = evaluate_loss(
         xmin.x,
         keys,
         weights,

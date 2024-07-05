@@ -101,49 +101,5 @@ def run_tu():
     )
 
 
-def test_lamb_with_lots_parameters(lamb=0.0, guess_params=None):
-    """Testing using lambda penalty loss for the solver.
-    """
-    onebody_params = ["E0", "t"]
-    twobody_params = ["U",'V', 'J','J_diag','hop_hop', 'hop_hop2', 'ni_hop', 'ni_hop2']  
-    set_up_h4(
-        "../h4_data/named_terms_new.hdf5",
-        "../h4_data/ai_descriptors.csv",
-        f"model_output_{lamb}.hdf5",
-        nroots=36, 
-        onebody_params=onebody_params,
-        twobody_params=twobody_params,
-        minimum_1s_occupation=3.7,
-        w_0=0.6,
-        beta=4.0,
-        lamb=lamb,
-        guess_params=guess_params,
-    )
-
-def test_lamb_all_parameters(lamb=0.0, guess_params=None):
-    """Testing using lambda penalty loss for the solver.
-    """
-    onebody_params = ["E0", "t", "tdiag"]
-    twobody_params = ["U",'V', "Vdiag", 
-                      "J","J_diag",
-                      "hop_hop", "hop_hop2", "hop_hop3", "hop_hop4","hop_hop5",
-                      "hop_hopdiag", "hop_hopdiag2", "hopdiag_hopdiag", "hopdiag_hopdiag2",
-                      "ni_hop", "ni_hop2", "ni_hop3", "ni_hopdiag"]  
-    set_up_h4(
-        "../h4_data/named_terms_new.hdf5",
-        "../h4_data/ai_descriptors.csv",
-        f"model_output_{lamb}.hdf5",
-        nroots=36, 
-        onebody_params=onebody_params,
-        twobody_params=twobody_params,
-        minimum_1s_occupation=3.7,
-        w_0=0.6,
-        beta=4.0,
-        lamb=lamb,
-        guess_params=guess_params,
-    )
-
-
 if __name__=="__main__":
-    #run_tu()
-    test_lamb_all_parameters(lamb=0.1)
+    run_tu()

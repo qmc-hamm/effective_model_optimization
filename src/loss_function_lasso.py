@@ -93,7 +93,7 @@ def give_boltzmann_weights(energy_ab, beta):
     return boltzmann_weights
 
 
-def evaluate_loss(
+def evaluate_loss_lasso(
     params: np.ndarray,
     keys,
     weights,
@@ -115,7 +115,7 @@ def evaluate_loss(
     keys : List
         Used to make params a pd.Series. keys should match the key names of the onebody and twobody operators.
     weights : List
-        w_0, w_1, lambda ; lambda not used -> could be used for lasso
+        w_0, w_1, lambda ; lambda is used with lasso term
     boltzmann_weights : nd.array(float)
         boltztman weights, the ground state always get 1. lower energy states get more weighting then exponentially 
         decays.
@@ -174,7 +174,7 @@ def evaluate_loss(
     )
 
     loss = (
-        w_0 * sloss + w_1 * dloss + w_0 * (penalty**2)
+        w_0 * sloss + w_1 * dloss + w_0 * (penalty**2) + lamb * np.sum(np.abs(params))
     )
 
     return {
@@ -189,9 +189,8 @@ def evaluate_loss(
         "params": params,
     }
 
-
 def optimize_function(*args, **kwargs):
-    return evaluate_loss(*args, **kwargs)["loss"]
+    return evaluate_loss_lasso(*args, **kwargs)["loss"]
 
 
 def mapping(

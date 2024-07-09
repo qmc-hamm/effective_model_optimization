@@ -207,7 +207,7 @@ def solve_effective_hamiltonian(
 
 def test():
     """
-    put something here to test the code
+    put something here to test the code. Maybe hubbard model and tb model example. Similar to pyscf's example tests for fci.
     """
 
 

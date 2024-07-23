@@ -1,0 +1,6 @@
+__pycache__/*
+
+# In between Cross-Validation folders to exclude
+# Folders will be processed into csv data to be viewed
+CVmodels/*
+old_models/*

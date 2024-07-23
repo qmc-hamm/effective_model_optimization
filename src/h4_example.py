@@ -1,6 +1,7 @@
 import h5py
 import pandas as pd
 import loss_function
+import os
 
 
 def set_up_h4(
@@ -105,7 +106,7 @@ def run_tu(p=0):
         p=p, 
     )
 
-def CV_run_tu(p=1, nCV=1):
+def CV_run_tu(p=1, nCV=1, w_0=0.9, dir="../CVmodels"):
     """Run optimization of the TU model. nCV is number of Cross Validation Runs.
     """
     onebody_params = ["E0", "t"]
@@ -115,18 +116,18 @@ def CV_run_tu(p=1, nCV=1):
         set_up_h4(
             "../h4_data/named_terms_new.hdf5",
             "../h4_data/ai_descriptors.csv",
-            f"../CVmodels/CV{i}_model_output.hdf5",
+            f"{dir}/t-U/CV{i}_model_output.hdf5",
             nroots=36, # (4 sites choose 2 electrons)^2 , ^2 is for both spin up and spin down
             onebody_params=onebody_params,
             twobody_params=twobody_params,
             minimum_1s_occupation=3.7,
-            w_0=0.9,
+            w_0=w_0,
             beta=0.0,
             lamb=0,
-            p=p, 
+            p=p
         )
 
-def CV_run_tuv(p=1, nCV=1):
+def CV_run_tuv(p=1, nCV=1, w_0=0.9, dir="../CVmodels"):
     """Run optimization of the TU model. nCV is number of Cross Validation Runs.
     """
     onebody_params = ["E0", "t"]
@@ -136,18 +137,18 @@ def CV_run_tuv(p=1, nCV=1):
         set_up_h4(
             "../h4_data/named_terms_new.hdf5",
             "../h4_data/ai_descriptors.csv",
-            f"../CVmodels/CV{i}_model_output.hdf5",
+            f"{dir}/t-U-V/CV{i}_model_output.hdf5",
             nroots=36, # (4 sites choose 2 electrons)^2 , ^2 is for both spin up and spin down
             onebody_params=onebody_params,
             twobody_params=twobody_params,
             minimum_1s_occupation=3.7,
-            w_0=0.9,
+            w_0=w_0,
             beta=0.0,
             lamb=0,
             p=p, 
         )
 
-def CV_run_tuw(p=1, nCV=1):
+def CV_run_tuw(p=1, nCV=1, w_0=0.9, dir="../CVmodels"):
     """Run optimization of the TU model. nCV is number of Cross Validation Runs.
     """
     onebody_params = ["E0", "t"]
@@ -157,18 +158,18 @@ def CV_run_tuw(p=1, nCV=1):
         set_up_h4(
             "../h4_data/named_terms_new.hdf5",
             "../h4_data/ai_descriptors.csv",
-            f"../CVmodels/t-U-W/CV{i}_model_output.hdf5",
+            f"{dir}/t-U-W/CV{i}_model_output.hdf5",
             nroots=36, # (4 sites choose 2 electrons)^2 , ^2 is for both spin up and spin down
             onebody_params=onebody_params,
             twobody_params=twobody_params,
             minimum_1s_occupation=3.7,
-            w_0=0.9,
+            w_0=w_0,
             beta=0.0,
             lamb=0,
             p=p, 
         )
 
-def CV_run_tuj(p=1, nCV=1):
+def CV_run_tuj(p=1, nCV=1, w_0=0.9, dir="../CVmodels"):
     """Run optimization of the TU model. nCV is number of Cross Validation Runs.
     """
     onebody_params = ["E0", "t"]
@@ -178,17 +179,28 @@ def CV_run_tuj(p=1, nCV=1):
         set_up_h4(
             "../h4_data/named_terms_new.hdf5",
             "../h4_data/ai_descriptors.csv",
-            f"../CVmodels/t-U-J/CV{i}_model_output.hdf5",
+            f"{dir}/t-U-J/CV{i}_model_output.hdf5",
             nroots=36, # (4 sites choose 2 electrons)^2 , ^2 is for both spin up and spin down
             onebody_params=onebody_params,
             twobody_params=twobody_params,
             minimum_1s_occupation=3.7,
-            w_0=0.9,
+            w_0=w_0,
             beta=0.0,
             lamb=0,
             p=p, 
         )
 
 if __name__=="__main__":
-    CV_run_tuw(p=5, nCV=10)
-    CV_run_tuj(p=5, nCV=10)
+    run_tu(p=0)
+    #os.mkdir("../CVmodels")
+    #os.mkdir("../CVmodels/t-U")
+    #CV_run_tu(p=1, nCV=30, w_0=0.7, dir="../CVmodels")
+    
+    #os.mkdir("../CVmodels/t-U-V")
+    #CV_run_tuv(p=1, nCV=30, w_0=0.7, dir="../CVmodels")
+    
+    #os.mkdir("../CVmodels/t-U-W")
+    #CV_run_tuw(p=1, nCV=30, w_0=0.7, dir="../CVmodels")
+    
+    #os.mkdir("../CVmodels/t-U-J")
+    #CV_run_tuj(p=1, nCV=30, w_0=0.7, dir="../CVmodels")

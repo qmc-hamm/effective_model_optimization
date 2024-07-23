@@ -63,7 +63,7 @@ def set_up_h4(
             twobody_keys.append(k)
     ai_df = pd.read_csv(ai_descriptors)
     ai_df = ai_df[ai_df.E0 > minimum_1s_occupation]
-    ai_df = ai_df[ ai_df.U < 1.3]  # Need to remove the top two states from the optimization
+    ai_df = ai_df[ai_df.U < 1.3]  # Need to remove the top two states from the optimization
 
     matches = onebody_params + twobody_params
 
@@ -117,7 +117,7 @@ def CV_run_tu(p=1, nCV=1, w_0=0.9, dir="../CVmodels"):
             "../h4_data/named_terms_new.hdf5",
             "../h4_data/ai_descriptors.csv",
             f"{dir}/t-U/CV{i}_model_output.hdf5",
-            nroots=36, # (4 sites choose 2 electrons)^2 , ^2 is for both spin up and spin down
+            nroots=36,  # (4 sites choose 2 electrons)^2 , ^2 is for both spin up and spin down
             onebody_params=onebody_params,
             twobody_params=twobody_params,
             minimum_1s_occupation=3.7,

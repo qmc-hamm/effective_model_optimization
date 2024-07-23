@@ -134,7 +134,7 @@ def evaluate_loss(
     nroots : int
         Number of eigenstates to solve the model Hamiltonian for. 
     matches : list[str]
-        List of descriptor names as strings
+        Which descriptors to use for the descriptor distance calculation.
     fcivec : nd.array()
         Stored fcivecs to pass into the solver, so that full model diagonalization does not take as long during 
         optimization.

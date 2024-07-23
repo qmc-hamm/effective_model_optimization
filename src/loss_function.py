@@ -172,14 +172,22 @@ def evaluate_loss(
     sloss = np.sum(boltzmann_weights * dist_energy[row_ind, col_ind])
     dloss = np.sum(boltzmann_weights * dist_des[row_ind, col_ind])
     not_col_ind = np.delete(np.arange(nroots), col_ind)
+
+    # Debugging information to test penalty 
+    #print(row_ind)
+    #print(col_ind)
+    #print()
+    #print(not_col_ind)
+    #print(descriptors["energy"])
     penalty = unmapped_penalty(
         descriptors["energy"][not_col_ind], max_ai_energy, norm=norm
     )
 
     loss = (
-        w_0 * sloss + w_1 * dloss + w_0 * (penalty**2)
+        w_0 * sloss + w_1 * dloss #+ w_0 * (penalty)
     )
 
+    # Debugging information to test loss
     #print()
     #print("loss ", loss)
     #print("params", params.values)
@@ -255,6 +263,7 @@ def mapping(
         overrides the dmd parameters
     """
     p_out_states = np.random.choice(np.arange(0, len(ai_df)),size=p, replace=False)
+    #p_out_states = np.array([p]) # this p is for 30-k_groups, leaving out data 1-by-1
     ai_df_train =  ai_df.drop(p_out_states, axis=0)
     ai_df_test =  ai_df.loc[p_out_states]
     max_ai_energy = np.max(ai_df["energy"])
@@ -331,6 +340,7 @@ def mapping(
     print("loss per state :", data_train['loss']/N)
     print("Spectrum loss per state  :", data_train['sloss']/N)
     print("Descriptor loss per state:", data_train['dloss']/N)
+    print("penalty:", data_train['penalty'])
 
 
     data_test = evaluate_loss(
@@ -352,6 +362,7 @@ def mapping(
     print("Test: loss per state :", data_test['loss']/N)
     print("Test: Spectrum loss per state  :", data_test['sloss']/N)
     print("Test: Descriptor loss per state:", data_test['dloss']/N)
+    print("Test: penalty:", data_test['penalty'])
 
     with h5py.File(outfile, "w") as f:
         for k in onebody_params + twobody_params:

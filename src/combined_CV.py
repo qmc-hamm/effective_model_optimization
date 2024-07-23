@@ -2,7 +2,7 @@ import h5py
 import pandas as pd
 
 
-def unpack_data(infile:str, parameters:list[str]):
+def unpack_data(infile: str, parameters: list[str]):
     """ Unpack Optimized Solved Model from *.hdf5 files. Exports the loss data, setting parameters, and model
     parameters.
 
@@ -43,7 +43,7 @@ def unpack_data(infile:str, parameters:list[str]):
     return unpack_model
 
 
-def make_avg_CSV_file(nCV:int, model_name:str, parameters:list[str], dir:str):
+def make_avg_CSV_file(nCV: int, model_name: str, parameters: list[str], dir: str):
     """_summary_
 
     Parameters

@@ -14,7 +14,6 @@ def set_up_h4(
     minimum_1s_occupation=3.7,
     w_0=1,
     beta=0,
-    lamb=0,
     p=0,
     guess_params=None,
 ):
@@ -42,8 +41,6 @@ def set_up_h4(
         Weighting of the spectrum loss. The descriptor loss is weighted as 1-w0. by default 1
     beta : float, optional
         inverse temperature for the boltzmann weights. 0 means equal weights to all states, by default 0
-    lamb : int, optional
-        The penalty loss for parameters, by default 0
     p : int, optional
         The number of states to leave out.
     guess_params : pd.Series, optional
@@ -69,7 +66,7 @@ def set_up_h4(
 
     w_1 = 1 - w_0
 
-    weights = [w_0, w_1, lamb]  # w_0, w_1, lamb
+    weights = [w_0, w_1]  # w_0, w_1
 
     loss_function.mapping(
         onebody,
@@ -102,7 +99,6 @@ def run_tu(p=0):
         minimum_1s_occupation=3.7,
         w_0=0.6,
         beta=0.0,
-        lamb=0,
         p=p,
     )
 
@@ -124,7 +120,6 @@ def CV_run_tu(p=1, nCV=1, w_0=0.9, dir="../CVmodels"):
             minimum_1s_occupation=3.7,
             w_0=w_0,
             beta=0.0,
-            lamb=0,
             p=p
         )
 
@@ -146,7 +141,6 @@ def CV_run_tuv(p=1, nCV=1, w_0=0.9, dir="../CVmodels"):
             minimum_1s_occupation=3.7,
             w_0=w_0,
             beta=0.0,
-            lamb=0,
             p=p,
         )
 
@@ -168,7 +162,6 @@ def CV_run_tuw(p=1, nCV=1, w_0=0.9, dir="../CVmodels"):
             minimum_1s_occupation=3.7,
             w_0=w_0,
             beta=0.0,
-            lamb=0,
             p=p,
         )
 
@@ -190,7 +183,6 @@ def CV_run_tuj(p=1, nCV=1, w_0=0.9, dir="../CVmodels"):
             minimum_1s_occupation=3.7,
             w_0=w_0,
             beta=0.0,
-            lamb=0,
             p=p,
         )
 

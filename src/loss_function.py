@@ -117,7 +117,7 @@ def evaluate_loss(
     keys : List
         Used to make params a pd.Series. keys should match the key names of the onebody and twobody operators.
     weights : List
-        w_0, w_1, lambda ; lambda not used -> could be used for lasso
+        w_0, w_1
     boltzmann_weights : nd.array(float)
         boltztman weights, the ground state always get 1. lower energy states get more weighting then exponentially
         decays.
@@ -148,7 +148,6 @@ def evaluate_loss(
     """
     w_0 = weights[0]
     w_1 = weights[1]
-    lamb = weights[2]
 
     if fcivec is None and "fcivec" in cache:
         fcivec = cache["fcivec"]
@@ -252,8 +251,7 @@ def mapping(
         List of descriptor names as strings. keys that are used to match the ab initio and model descriptors.
         Should be the descriptors corresponding to the terms in the hamiltonian.
     weights : list
-        w_0, w_1, lambda. list of floats, [w_0, w_1, lambda] weights for the spectrum loss, descriptor loss,
-        and lasso penalty
+        w_0, w_1. list of floats, [w_0, w_1] weights for the spectrum loss and descriptor loss.
     beta : float
         inverse temperature for the boltzmann weights. 0 means equal weights to all states
     p : int
@@ -368,7 +366,6 @@ def mapping(
             f["dmd_params/" + k] = dmd.params[k]
         f["para_w_0"] = weights[0]
         f["para_w_1"] = weights[1]
-        f["para_lamb"] = weights[2]
         f["loss_loss"] = xmin.fun
         f["ai_spectrum_range (Ha)"] = np.max(ai_df["energy"]) - np.min(ai_df["energy"])
 

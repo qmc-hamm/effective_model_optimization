@@ -2,6 +2,10 @@ import h5py
 import pandas as pd
 import loss_function
 import numpy as np
+from scipy.optimize import linear_sum_assignment
+import solver
+
+cache = {}
 
 
 def return_set_up_h4(
@@ -102,8 +106,8 @@ def generate_t_U(tmin: float,
                               onebody_params=onebody_params,
                               twobody_params=twobody_params,
                               minimum_1s_occupation=3.7,
-                              w_0=0.8,
-                              beta=0.0,
+                              w_0=0.7,
+                              beta=5.0,
                               )
 
     ai_df, beta, nroots, weights, onebody, twobody, matches = set_up
@@ -118,7 +122,68 @@ def generate_t_U(tmin: float,
         for U in np.linspace(Umin, Umax, num=ngrid):
 
             params = [eps, t, U]  # loop through these with same ordering as keys
-            data = loss_function.evaluate_loss(
+            
+            data_sidb = evaluate_loss_sidb(
+                params,
+                keys,
+                weights,
+                boltzmann_weights,
+                onebody,
+                twobody,
+                ai_df,
+                max_ai_energy,
+                nroots,
+                matches,
+                None,
+                norm,
+            )
+
+            data_sid = evaluate_loss_sid(
+                params,
+                keys,
+                weights,
+                boltzmann_weights,
+                onebody,
+                twobody,
+                ai_df,
+                max_ai_energy,
+                nroots,
+                matches,
+                None,
+                norm,
+            )
+
+            data_si = evaluate_loss_si(
+                params,
+                keys,
+                weights,
+                boltzmann_weights,
+                onebody,
+                twobody,
+                ai_df,
+                max_ai_energy,
+                nroots,
+                matches,
+                None,
+                norm,
+            )
+
+            data_sd = evaluate_loss_sd(
+                params,
+                keys,
+                weights,
+                boltzmann_weights,
+                onebody,
+                twobody,
+                ai_df,
+                max_ai_energy,
+                nroots,
+                matches,
+                None,
+                norm,
+            )
+
+            data_s = evaluate_loss_s(
                 params,
                 keys,
                 weights,
@@ -134,13 +199,14 @@ def generate_t_U(tmin: float,
             )
 
             new_data = {}
-            new_data["loss"] = data["loss"]
-            new_data["sloss"] = data["sloss"]
-            new_data["dloss"] = data["dloss"]
-            new_data["penalty"] = data["penalty"]
+            new_data["loss_sidb"] = data_sidb["loss"]
+            new_data["loss_sid"] = data_sid["loss"]
+            new_data["loss_si"] = data_si["loss"]
+            new_data["loss_sd"] = data_sd["loss"]
+            new_data["loss_s"] = data_s["loss"]
 
             for i, k in enumerate(keys):
-                new_data[k] = data["params"][i]
+                new_data[k] = data_sidb["params"][i]
 
             loss_grid.append(new_data)
 
@@ -150,8 +216,316 @@ def generate_t_U(tmin: float,
     return
 
 
+# s = spectrum, i = intruder, d = descriptor, b = boltzmann weighting
+def evaluate_loss_sidb(
+    params: np.ndarray,
+    keys,
+    weights,
+    boltzmann_weights,
+    onebody,
+    twobody,
+    ai_df,
+    max_ai_energy,
+    nroots,
+    matches,
+    fcivec,
+    norm,
+) -> float:
+    """The actual Loss functional.
+
+    Parameters
+    ----------
+    params : np.ndarray
+        Parameters of the hamiltonian. The keys should match the key names of the onebody and twobody operators.
+    keys : List
+        Used to make params a pd.Series. keys should match the key names of the onebody and twobody operators.
+    weights : List
+        w_0, w_1
+    boltzmann_weights : nd.array(float)
+        boltztman weights, the ground state always get 1. lower energy states get more weighting then exponentially
+        decays.
+    onebody : dict
+        (keys are strings, values are 2D np.arrays) tij. Dictionary of the 1-body operators. Each operator of the
+        shape (norb,norb).
+    twobody : dict
+        (keys are strings, values are 4D np.arrays) Vijkl. Dictionary of the 2-body operators. Each operator of the
+        shape (norb,norb,norb,norb).
+    ai_df : pd.DataFrame
+        The descriptor information of the ab initio data. The keys should match model descriptors'.
+    max_ai_energy : float
+        Maximum of the whole ab initio data. See np.max(ai_df["energy"]) in mapping.
+    nroots : int
+        Number of eigenstates to solve the model Hamiltonian for.
+    matches : list[str]
+        Which descriptors to use for the descriptor distance calculation.
+    fcivec : nd.array()
+        Stored fcivecs to pass into the solver, so that full model diagonalization does not take as long during
+        optimization.
+    norm : float
+        Norm to normalize the incoming data. (sigma_{E}_{ab})^2
+
+    Returns
+    -------
+    float
+        Loss function value.
+    """
+    w_0 = weights[0]
+    w_1 = weights[1]
+
+    if fcivec is None and "fcivec" in cache:
+        fcivec = cache["fcivec"]
+
+    params = pd.Series(params, index=keys)
+
+    descriptors, fcivec = solver.solve_effective_hamiltonian(
+        onebody, twobody, params, nroots=nroots, ci0=fcivec
+    )
+    cache["fcivec"] = fcivec
+
+    dist_des = loss_function.descriptor_distance(
+        ai_df, descriptors, matches=matches, norm=norm
+    )
+    dist_energy = loss_function.descriptor_distance(
+        ai_df, descriptors, matches=["energy"], norm=norm
+    )
+
+    distance = w_0 * dist_energy + w_1 * dist_des
+
+    penalty = np.maximum(0, max_ai_energy - descriptors['energy'])
+
+    npenalty = nroots - len(ai_df)
+    distance = np.vstack((distance, np.tile(w_0 * penalty, (npenalty, 1))))  # replace 6 with nroots-len(ai_df)
+
+    boltzmann_weights = np.concatenate((boltzmann_weights, np.ones((npenalty))))
+
+    row_ind, col_ind = linear_sum_assignment(distance)
+
+    loss = np.sum(boltzmann_weights * distance[row_ind, col_ind])
+
+    return {
+        "loss": loss,
+        "sloss": np.sum(dist_energy[row_ind[:len(ai_df)], col_ind[:len(ai_df)]]),
+        "dloss": np.sum(dist_des[row_ind[:len(ai_df)], col_ind[:len(ai_df)]]),
+        "penalty": np.sum(np.tile(penalty, (npenalty, 1))[row_ind[len(ai_df):] - len(ai_df), col_ind[len(ai_df):]]), # NEEDS TO BE FIXED
+        "descriptors": descriptors,
+        "distance": distance,
+        "row_ind": row_ind,
+        "col_ind": col_ind,
+        "params": params,
+    }
+
+
+def evaluate_loss_sid(
+    params: np.ndarray,
+    keys,
+    weights,
+    boltzmann_weights,
+    onebody,
+    twobody,
+    ai_df,
+    max_ai_energy,
+    nroots,
+    matches,
+    fcivec,
+    norm,
+) -> float:
+    w_0 = weights[0]
+    w_1 = weights[1]
+
+    if fcivec is None and "fcivec" in cache:
+        fcivec = cache["fcivec"]
+
+    params = pd.Series(params, index=keys)
+
+    descriptors, fcivec = solver.solve_effective_hamiltonian(
+        onebody, twobody, params, nroots=nroots, ci0=fcivec
+    )
+    cache["fcivec"] = fcivec
+
+    dist_des = loss_function.descriptor_distance(
+        ai_df, descriptors, matches=matches, norm=norm
+    )
+    dist_energy = loss_function.descriptor_distance(
+        ai_df, descriptors, matches=["energy"], norm=norm
+    )
+
+    distance = w_0 * dist_energy + w_1 * dist_des
+
+    penalty = np.maximum(0, max_ai_energy - descriptors['energy'])
+
+    npenalty = nroots - len(ai_df)
+    distance = np.vstack((distance, np.tile(w_0 * penalty, (npenalty, 1))))  # replace 6 with nroots-len(ai_df)
+
+    boltzmann_weights = np.concatenate((boltzmann_weights, np.ones((npenalty))))
+
+    row_ind, col_ind = linear_sum_assignment(distance)
+
+    loss = np.sum(distance[row_ind, col_ind])
+
+    return {
+        "loss": loss,
+    }
+
+
+def evaluate_loss_si(
+    params: np.ndarray,
+    keys,
+    weights,
+    boltzmann_weights,
+    onebody,
+    twobody,
+    ai_df,
+    max_ai_energy,
+    nroots,
+    matches,
+    fcivec,
+    norm,
+) -> float:
+    w_0 = weights[0]
+    w_1 = weights[1]
+
+    if fcivec is None and "fcivec" in cache:
+        fcivec = cache["fcivec"]
+
+    params = pd.Series(params, index=keys)
+
+    descriptors, fcivec = solver.solve_effective_hamiltonian(
+        onebody, twobody, params, nroots=nroots, ci0=fcivec
+    )
+    cache["fcivec"] = fcivec
+
+    dist_des = loss_function.descriptor_distance(
+        ai_df, descriptors, matches=matches, norm=norm
+    )
+    dist_energy = loss_function.descriptor_distance(
+        ai_df, descriptors, matches=["energy"], norm=norm
+    )
+
+    distance = dist_energy
+
+    penalty = np.maximum(0, max_ai_energy - descriptors['energy'])
+
+    npenalty = nroots - len(ai_df)
+    distance = np.vstack((distance, np.tile(penalty, (npenalty, 1))))  # replace 6 with nroots-len(ai_df)
+
+    boltzmann_weights = np.concatenate((boltzmann_weights, np.ones((npenalty))))
+
+    row_ind, col_ind = linear_sum_assignment(distance)
+
+    loss = np.sum(distance[row_ind, col_ind])
+
+    return {
+        "loss": loss,
+    }
+
+
+def evaluate_loss_sd(
+    params: np.ndarray,
+    keys,
+    weights,
+    boltzmann_weights,
+    onebody,
+    twobody,
+    ai_df,
+    max_ai_energy,
+    nroots,
+    matches,
+    fcivec,
+    norm,
+) -> float:
+    w_0 = weights[0]
+    w_1 = weights[1]
+
+    if fcivec is None and "fcivec" in cache:
+        fcivec = cache["fcivec"]
+
+    params = pd.Series(params, index=keys)
+
+    descriptors, fcivec = solver.solve_effective_hamiltonian(
+        onebody, twobody, params, nroots=nroots, ci0=fcivec
+    )
+    cache["fcivec"] = fcivec
+
+    dist_des = loss_function.descriptor_distance(
+        ai_df, descriptors, matches=matches, norm=norm
+    )
+    dist_energy = loss_function.descriptor_distance(
+        ai_df, descriptors, matches=["energy"], norm=norm
+    )
+
+    distance = w_0 * dist_energy + w_1 * dist_des
+
+    penalty = np.maximum(0, max_ai_energy - descriptors['energy'])
+
+    npenalty = nroots - len(ai_df)
+    #distance = np.vstack((distance, np.tile(w_0 * penalty, (npenalty, 1))))  # replace 6 with nroots-len(ai_df)
+
+    boltzmann_weights = np.concatenate((boltzmann_weights, np.ones((npenalty))))
+
+    row_ind, col_ind = linear_sum_assignment(distance)
+
+    loss = np.sum(distance[row_ind, col_ind])
+
+    return {
+        "loss": loss,
+    }
+
+
+def evaluate_loss_s(
+    params: np.ndarray,
+    keys,
+    weights,
+    boltzmann_weights,
+    onebody,
+    twobody,
+    ai_df,
+    max_ai_energy,
+    nroots,
+    matches,
+    fcivec,
+    norm,
+) -> float:
+    w_0 = weights[0]
+    w_1 = weights[1]
+
+    if fcivec is None and "fcivec" in cache:
+        fcivec = cache["fcivec"]
+
+    params = pd.Series(params, index=keys)
+
+    descriptors, fcivec = solver.solve_effective_hamiltonian(
+        onebody, twobody, params, nroots=nroots, ci0=fcivec
+    )
+    cache["fcivec"] = fcivec
+
+    dist_des = loss_function.descriptor_distance(
+        ai_df, descriptors, matches=matches, norm=norm
+    )
+    dist_energy = loss_function.descriptor_distance(
+        ai_df, descriptors, matches=["energy"], norm=norm
+    )
+
+    distance = dist_energy
+
+    penalty = np.maximum(0, max_ai_energy - descriptors['energy'])
+
+    npenalty = nroots - len(ai_df)
+    #distance = np.vstack((distance, np.tile(w_0 * penalty, (npenalty, 1))))  # replace 6 with nroots-len(ai_df)
+
+    boltzmann_weights = np.concatenate((boltzmann_weights, np.ones((npenalty))))
+
+    row_ind, col_ind = linear_sum_assignment(distance)
+
+    loss = np.sum(distance[row_ind, col_ind])
+
+    return {
+        "loss": loss,
+    }
+
+
 if __name__ == "__main__":
     ngrid = 50
 
     eps = -0.498
-    generate_t_U(0.0, -0.05, 0.1, 0.4, eps=eps, ngrid=ngrid, outfile=f"loss_grid{ngrid}_eps{eps}.csv")
+    #generate_t_U(0.0, -0.05, 0.1, 0.4, eps=eps, ngrid=ngrid, outfile=f"loss_grid{ngrid}_eps{eps}.csv")
+    generate_t_U(0.05, -0.05, 0.2, 0.4, eps=eps, ngrid=ngrid, outfile=f"loss_grid{ngrid}_eps{eps}_big_w0-0.7.csv")

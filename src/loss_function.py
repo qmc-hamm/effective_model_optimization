@@ -165,12 +165,12 @@ def evaluate_loss(
     dist_energy = descriptor_distance(
         ai_df, descriptors, matches=["energy"], norm=norm
     )
-    distance = dist_energy + dist_des
-    row_ind, col_ind = linear_sum_assignment(distance)
+    #distance = dist_energy + dist_des
+    #row_ind, col_ind = linear_sum_assignment(distance)
 
-    sloss = np.sum(boltzmann_weights * dist_energy[row_ind, col_ind])
-    dloss = np.sum(boltzmann_weights * dist_des[row_ind, col_ind])
-    not_col_ind = np.delete(np.arange(nroots), col_ind)
+    #sloss = np.sum(boltzmann_weights * dist_energy[row_ind, col_ind])
+    #dloss = np.sum(boltzmann_weights * dist_des[row_ind, col_ind])
+    #not_col_ind = np.delete(np.arange(nroots), col_ind)
 
     # Debugging information to test penalty
     #print(row_ind)
@@ -178,13 +178,21 @@ def evaluate_loss(
     #print()
     #print(not_col_ind)
     #print(descriptors["energy"])
-    penalty = unmapped_penalty(
-        descriptors["energy"][not_col_ind], max_ai_energy, norm=norm
-    )
 
-    loss = (
-        w_0 * sloss + w_1 * dloss  # + w_0 * (penalty)
-    )
+    #penalty = unmapped_penalty(
+    #    descriptors["energy"][not_col_ind], max_ai_energy, norm=norm
+    #)
+
+    distance = w_0 * dist_energy + w_1 * dist_des
+
+    penalty = np.maximum(0, max_ai_energy - descriptors['energy'])
+
+    npenalty = nroots - len(ai_df)
+    distance = np.vstack((distance, np.tile(w_0 * penalty, (npenalty, 1))))  # replace 6 with nroots-len(ai_df)
+
+    row_ind, col_ind = linear_sum_assignment(distance)
+
+    loss = np.sum(distance[row_ind, col_ind])
 
     # Debugging information to test loss
     #print()
@@ -193,9 +201,9 @@ def evaluate_loss(
 
     return {
         "loss": loss,
-        "sloss": sloss,
-        "dloss": dloss,
-        "penalty": penalty,
+        "sloss": np.sum(dist_energy[row_ind[:len(ai_df)], col_ind[:len(ai_df)]]),
+        "dloss": np.sum(dist_des[row_ind[:len(ai_df)], col_ind[:len(ai_df)]]),
+        "penalty": np.sum(np.tile(penalty, (npenalty, 1))[row_ind[len(ai_df):] - len(ai_df), col_ind[len(ai_df):]]), # NEEDS TO BE FIXED
         "descriptors": descriptors,
         "distance": distance,
         "row_ind": row_ind,
@@ -204,8 +212,93 @@ def evaluate_loss(
     }
 
 
+# maps for train states first, then maps the rest of the model states to test states.
+def CV_evaluate_loss(
+    params: np.ndarray,
+    keys,
+    weights,
+    onebody,
+    twobody,
+    ai_df,
+    max_ai_energy,
+    nroots,
+    matches,
+    fcivec,
+    norm,
+    train_states,
+    test_states,
+) -> float:
+
+    w_0 = weights[0]
+    w_1 = weights[1]
+
+    if fcivec is None and "fcivec" in cache:
+        fcivec = cache["fcivec"]
+
+    params = pd.Series(params, index=keys)
+
+    descriptors, fcivec = solver.solve_effective_hamiltonian(
+        onebody, twobody, params, nroots=nroots, ci0=None
+    )
+    cache["fcivec"] = fcivec
+
+    dist_des = descriptor_distance(ai_df, descriptors, matches=matches, norm=norm)
+    dist_energy = descriptor_distance(ai_df, descriptors, matches=["energy"], norm=norm)
+
+    distance = w_0 * dist_energy + w_1 * dist_des
+
+    penalty = np.maximum(0, max_ai_energy - descriptors['energy'])
+
+    npenalty = nroots - len(ai_df)
+    distance_train = np.vstack((distance[train_states], np.tile(w_0 * penalty, (npenalty, 1))))
+    distance = np.vstack((distance, np.tile(w_0 * penalty, (npenalty, 1))))
+
+    row_ind, col_ind = linear_sum_assignment(distance_train)
+    for p in np.sort(test_states):
+        ind = np.where(row_ind == p)[0][0]
+        for i in range(ind, len(row_ind)):
+            row_ind[i] += 1
+
+    loss = np.sum(distance[row_ind, col_ind])
+
+    # mapping the left over train states with left over model states
+
+    x = np.delete(np.arange(0, nroots), col_ind)
+    dist = distance[test_states][:, x]
+    rows, cols = linear_sum_assignment(dist)
+
+    test_loss = np.sum(dist[rows, cols])
+
+    train_row_inds = row_ind[np.where(row_ind < len(ai_df))[0]]
+    train_col_inds = col_ind[np.where(row_ind < len(ai_df))[0]]
+    test_row_inds = test_states[rows]
+    test_col_inds = x[cols]
+    penalty_row_inds = row_ind[np.where(row_ind >= len(ai_df))[0]]
+    penalty_col_inds = col_ind[np.where(row_ind >= len(ai_df))[0]]
+
+    return {
+        "train_loss": loss,  # train loss
+        "test_loss": test_loss,
+        "train_sloss": np.sum(dist_energy[train_row_inds, train_col_inds]),
+        "train_dloss": np.sum(dist_des[train_row_inds, train_col_inds]),
+        "test_sloss": np.sum(dist_energy[test_row_inds, test_col_inds]),
+        "test_dloss": np.sum(dist_des[test_row_inds, test_col_inds]),
+        "penalty": np.sum(np.tile(penalty, (npenalty, 1))[:, penalty_col_inds]),
+        "descriptors": descriptors,
+        "distance": distance,
+        "row_ind": row_ind,
+        "col_ind": col_ind,
+        "params": params,
+        'test_rows': np.array(test_states)[rows],
+        'test_cols': x[cols]}
+
+
 def optimize_function(*args, **kwargs):
     return evaluate_loss(*args, **kwargs)["loss"]
+
+
+def optimize_CV_function(*args, **kwargs):
+    return CV_evaluate_loss(*args, **kwargs)["train_loss"]
 
 
 def mapping(
@@ -291,7 +384,7 @@ def mapping(
     # OPTMIZATION LOOP START
     print("Starting optimization")
 
-    xmin = minimize(
+    """ xmin = minimize(
         optimize_function,
         x0,
         args=(
@@ -311,6 +404,29 @@ def mapping(
         method="Powell",
         tol=1e-7,
         options={"maxiter": 1000},
+    ) """
+
+    xmin = minimize(
+        optimize_CV_function,
+        x0,
+        args=(
+            keys,
+            weights,
+            onebody,
+            twobody,
+            ai_df,
+            max_ai_energy,
+            nroots,
+            matches,
+            None,
+            norm,
+            np.delete(np.arange(0, len(ai_df)), p_out_states),
+            p_out_states,
+        ),
+        jac="3-point",
+        method="Powell",
+        tol=1e-7,
+        options={"maxiter": 1000},
     )
 
     print(xmin.nit, xmin.nfev)
@@ -319,47 +435,32 @@ def mapping(
     print("parameters", xmin.x)
 
     print("Evaluate train data after optimization:")
-    data_train = evaluate_loss(
+    data = CV_evaluate_loss(
         xmin.x,
         keys,
         weights,
-        boltzmann_weights_train,
         onebody,
         twobody,
-        ai_df_train,
+        ai_df,
         max_ai_energy,
         nroots,
         matches,
         None,
         norm,
+        np.delete(np.arange(0, len(ai_df)), p_out_states),
+        p_out_states,
     )
 
-    N = len(ai_df_train)
-    print("loss per state :", data_train['loss'] / N)
-    print("Spectrum loss per state  :", data_train['sloss'] / N)
-    print("Descriptor loss per state:", data_train['dloss'] / N)
-    print("penalty:", data_train['penalty'])
+    N = len(ai_df)
+    print("train_loss:", data['train_loss'])
+    print("test_loss:", data['test_loss'])
+    print("penalty:", data['penalty'])
+    print("Ending Params:", data['params'])
 
-    data_test = evaluate_loss(
-        xmin.x,
-        keys,
-        weights,
-        boltzmann_weights_test,
-        onebody,
-        twobody,
-        ai_df_test,
-        max_ai_energy,
-        nroots,
-        matches,
-        None,
-        norm,
-    )
-
-    N = len(ai_df_test)
-    print("Test: loss per state :", data_test['loss'] / N)
-    print("Test: Spectrum loss per state  :", data_test['sloss'] / N)
-    print("Test: Descriptor loss per state:", data_test['dloss'] / N)
-    print("Test: penalty:", data_test['penalty'])
+    print("train_sloss per state:", data['train_sloss']/N)
+    print("test_sloss per state:", data['test_sloss']/N)
+    print("train_dloss per state:", data['train_dloss']/N)
+    print("test_dloss per state:", data['test_dloss']/N)
 
     with h5py.File(outfile, "w") as f:
         for k in onebody_params + twobody_params:
@@ -373,7 +474,17 @@ def mapping(
         f["nstates_test"] = len(ai_df_test)
         f["state_ind_for_test"] = p_out_states
 
-        for k in data_train:
+        for k in data:
+            if k == "descriptors":
+                for kk in data[k]:
+                    f["train/" + k + "/" + kk] = data[k][kk]
+            elif k == "params":
+                for i, kk in enumerate(onebody_params + twobody_params):
+                    f["rdmd_params/" + kk] = data[k][i]
+            else:
+                f[k] = data[k]
+
+        """ for k in data_train:
             if k == "descriptors":
                 for kk in data_train[k]:
                     f["train/" + k + "/" + kk] = data_train[k][kk]
@@ -391,7 +502,7 @@ def mapping(
                 for i, kk in enumerate(onebody_params + twobody_params):
                     f["test/" + "rdmd_params/" + kk] = data_test[k][i]
             else:
-                f["test/" + k] = data_test[k]
+                f["test/" + k] = data_test[k] """
 
         f["iterations"] = xmin.nit
         f["termination_message"] = xmin.message

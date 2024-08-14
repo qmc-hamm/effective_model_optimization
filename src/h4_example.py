@@ -66,7 +66,7 @@ def set_up_h4(
 
     w_1 = 1 - w_0
 
-    weights = [w_0, w_1]  # w_0, w_1
+    weights = [w_0, w_1]
 
     loss_function.mapping(
         onebody,
@@ -188,16 +188,41 @@ def CV_run_tuj(p=1, nCV=1, w_0=0.9, dir="../CVmodels"):
 
 
 if __name__ == "__main__":
-    run_tu(p=0)
+    #run_tu(p=2)
     #os.mkdir("../CVmodels")
-    #os.mkdir("../CVmodels/t-U")
-    #CV_run_tu(p=1, nCV=30, w_0=0.7, dir="../CVmodels")
+    """ os.mkdir("../CVmodels/t-U")
+    CV_run_tu(p=1, nCV=30, w_0=0.7, dir="../CVmodels")
 
-    #os.mkdir("../CVmodels/t-U-V")
-    #CV_run_tuv(p=1, nCV=30, w_0=0.7, dir="../CVmodels")
+    os.mkdir("../CVmodels_p2")
+    os.mkdir("../CVmodels_p2/t-U")
+    CV_run_tu(p=2, nCV=30, w_0=0.7, dir="../CVmodels_p2")
 
-    #os.mkdir("../CVmodels/t-U-W")
-    #CV_run_tuw(p=1, nCV=30, w_0=0.7, dir="../CVmodels")
+    os.mkdir("../CVmodels_p3")
+    os.mkdir("../CVmodels_p3/t-U")
+    CV_run_tu(p=3, nCV=30, w_0=0.7, dir="../CVmodels_p3")
 
-    #os.mkdir("../CVmodels/t-U-J")
-    #CV_run_tuj(p=1, nCV=30, w_0=0.7, dir="../CVmodels")
+    os.mkdir("../CVmodels_p4")
+    os.mkdir("../CVmodels_p4/t-U")
+    CV_run_tu(p=4, nCV=30, w_0=0.7, dir="../CVmodels_p4")
+
+    os.mkdir("../CVmodels/t-U-V")
+    CV_run_tuv(p=1, nCV=30, w_0=0.7, dir="../CVmodels")
+
+    os.mkdir("../CVmodels/t-U-W")
+    CV_run_tuw(p=1, nCV=30, w_0=0.7, dir="../CVmodels")
+
+    os.mkdir("../CVmodels/t-U-J")
+    CV_run_tuj(p=1, nCV=30, w_0=0.7, dir="../CVmodels") """
+
+    os.mkdir("../CVmodels_p5")
+    os.mkdir("../CVmodels_p5/t-U")
+    CV_run_tu(p=5, nCV=30, w_0=0.7, dir="../CVmodels_p5")
+
+    os.mkdir("../CVmodels_p5/t-U-V")
+    CV_run_tuv(p=5, nCV=30, w_0=0.7, dir="../CVmodels_p5")
+
+    os.mkdir("../CVmodels_p5/t-U-W")
+    CV_run_tuw(p=5, nCV=30, w_0=0.7, dir="../CVmodels_p5")
+
+    os.mkdir("../CVmodels_p5/t-U-J")
+    CV_run_tuj(p=5, nCV=30, w_0=0.7, dir="../CVmodels_p5")

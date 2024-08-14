@@ -15,23 +15,23 @@ def eff_model_trans_solver(h1, h2, norb=4, nelec=(2, 2), nroots=36):
         h2 : nd.array(float, float, float, float)
             shape(norb, norb, norb, norb). The 2-body hamiltonian
         norb : (int)
-            The number of orbital sites. 
+            The number of orbital sites.
         nelec : (tuple)
             Number of up and down electrons (up, down).
         nroots : (int)
-            The number of eigenstates to solve for. 
+            The number of eigenstates to solve for.
 
     Returns
     -------
         e : nd.array(float)
             Energy eigenvalues of hamiltonian. Of length nroots.
         fcivec : nd.array(nd.array(float))
-            Eigenvector with each eigenvalue. Shape (nroots, ndeterminants). nderterminants is the number of 
+            Eigenvector with each eigenvalue. Shape (nroots, ndeterminants). nderterminants is the number of
             determinants needed to describe wavefunctions.
         n_rdm1s : nd.array()
             Shape (nroots, 2, norbs, norbs). Spin seperated ((up,up), (down,down)) 1-body reduced density matricies.
         n_rdm2s : nd.array()
-            Shape (nroots, 3, norbs, norbs, norbs, norbs). 
+            Shape (nroots, 3, norbs, norbs, norbs, norbs).
             Spin seperated ((up,up,up,up), (up,up,down,down), (down,down,down,down)) 2-body reduced density matricies.
     """
     e, fcivec = fci.direct_spin1.kernel(
@@ -114,23 +114,23 @@ def eff_model_solver(h1, h2, norb=4, nelec=(2, 2), nroots=36, ci0: np.ndarray = 
         h2 : nd.array(float, float, float, float)
             shape(norb, norb, norb, norb). The 2-body hamiltonian
         norb : (int)
-            The number of orbital sites. 
+            The number of orbital sites.
         nelec : (tuple)
             Number of up and down electrons (up, down).
         nroots : (int)
-            The number of eigenstates to solve for. 
+            The number of eigenstates to solve for.
 
     Returns
     -------
         e : nd.array(float)
             Energy eigenvalues of hamiltonian. Of length nroots.
         fcivec : nd.array(nd.array(float))
-            Eigenvector with each eigenvalue. Shape (nroots, ndeterminants). nderterminants is the number of 
+            Eigenvector with each eigenvalue. Shape (nroots, ndeterminants). nderterminants is the number of
             determinants needed to describe wavefunctions.
         n_rdm1s : nd.array()
             Shape (nroots, 2, norbs, norbs). Spin seperated ((up,up), (down,down)) 1-body reduced density matricies.
         n_rdm2s : nd.array()
-            Shape (nroots, 3, norbs, norbs, norbs, norbs). 
+            Shape (nroots, 3, norbs, norbs, norbs, norbs).
             Spin seperated ((up,up,up,up), (up,up,down,down), (down,down,down,down)) 2-body reduced density matricies.
     """
     e, fcivec = fci.direct_spin1.kernel(
@@ -142,7 +142,7 @@ def eff_model_solver(h1, h2, norb=4, nelec=(2, 2), nroots=36, ci0: np.ndarray = 
         max_space=30,
         max_cycle=100,
         orbsym=None,
-        davidson_only=False, # TODO: compare timing to fci solver, once davidson solver bug in pyscf is solved 
+        davidson_only=False,  # TODO: compare timing to fci solver, once davidson solver bug in pyscf is solved
         ci0=ci0,
     )  # These davidson_only and ci0 can help speed up the solver
 

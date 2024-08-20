@@ -120,6 +120,10 @@ if __name__ == "__main__":
     #make_avg_CSV_file(nCV, 't-U', parameters, "../CVmodels_p4")
 
     #nCV = 30
+    parameters = ["E0", "t", "U", "tdiag"]
+    make_avg_CSV_file(nCV, 't-tprime-U', parameters, "../CVmodels_p5")
+    quit()
+
     parameters = ["E0", "t", "U"]
     make_avg_CSV_file(nCV, 't-U', parameters, "../CVmodels_p5")
 

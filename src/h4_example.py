@@ -187,6 +187,27 @@ def CV_run_tuj(p=1, nCV=1, w_0=0.9, dir="../CVmodels"):
         )
 
 
+def CV_run_tutprime(p=1, nCV=1, w_0=0.9, dir="../CVmodels"):
+    """Run optimization of the TU model. nCV is number of Cross Validation Runs.
+    """
+    onebody_params = ["E0", "t"]
+    twobody_params = ["U", "J"]
+
+    for i in range(nCV):
+        set_up_h4(
+            "../h4_data/named_terms_new.hdf5",
+            "../h4_data/ai_descriptors.csv",
+            f"{dir}/t-tprime-U/CV{i}_model_output.hdf5",
+            nroots=36,  # (4 sites choose 2 electrons)^2 , ^2 is for both spin up and spin down
+            onebody_params=onebody_params,
+            twobody_params=twobody_params,
+            minimum_1s_occupation=3.7,
+            w_0=w_0,
+            beta=0.0,
+            p=p,
+        )
+
+
 if __name__ == "__main__":
     #run_tu(p=2)
     #os.mkdir("../CVmodels")
@@ -214,15 +235,19 @@ if __name__ == "__main__":
     os.mkdir("../CVmodels/t-U-J")
     CV_run_tuj(p=1, nCV=30, w_0=0.7, dir="../CVmodels") """
 
-    os.mkdir("../CVmodels_p5")
-    os.mkdir("../CVmodels_p5/t-U")
-    CV_run_tu(p=5, nCV=30, w_0=0.7, dir="../CVmodels_p5")
+    if False:
+        os.mkdir("../CVmodels_p5")
+        os.mkdir("../CVmodels_p5/t-U")
+        CV_run_tu(p=5, nCV=30, w_0=0.7, dir="../CVmodels_p5")
 
-    os.mkdir("../CVmodels_p5/t-U-V")
-    CV_run_tuv(p=5, nCV=30, w_0=0.7, dir="../CVmodels_p5")
+        os.mkdir("../CVmodels_p5/t-U-V")
+        CV_run_tuv(p=5, nCV=30, w_0=0.7, dir="../CVmodels_p5")
 
-    os.mkdir("../CVmodels_p5/t-U-W")
-    CV_run_tuw(p=5, nCV=30, w_0=0.7, dir="../CVmodels_p5")
+        os.mkdir("../CVmodels_p5/t-U-W")
+        CV_run_tuw(p=5, nCV=30, w_0=0.7, dir="../CVmodels_p5")
 
-    os.mkdir("../CVmodels_p5/t-U-J")
+        os.mkdir("../CVmodels_p5/t-U-J")
+        CV_run_tuj(p=5, nCV=30, w_0=0.7, dir="../CVmodels_p5")
+
+    #os.mkdir("../CVmodels_p5/t-tprime-U")
     CV_run_tuj(p=5, nCV=30, w_0=0.7, dir="../CVmodels_p5")

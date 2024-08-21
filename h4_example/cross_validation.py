@@ -16,6 +16,7 @@ def runCV(
     beta=0,
     p=0,
     guess_params=None,
+    state_cutoff = None
 ):
     """_summary_
 
@@ -61,6 +62,8 @@ def runCV(
     ai_df = pd.read_csv(ai_descriptors)
     ai_df = ai_df[ai_df.E0 > minimum_1s_occupation]
     ai_df = ai_df[ai_df.U < 1.3]  # Need to remove the top two states from the optimization
+    if state_cutoff is not None:
+        ai_df = ai_df[ai_df.state < state_cutoff]
     ai_df = ai_df.reset_index()
     print("ai_df", ai_df)
     matches = onebody_params + twobody_params
@@ -82,15 +85,39 @@ def runCV(
     )
 
 
-if __name__ == "__main__":
+def make_name(parameters):
+    return "_".join(parameters[0]) + "_" + "_".join(parameters[1])
 
-    runCV(named_terms="symmetric_operators.hdf5",
-          ai_descriptors="ai_data/r3.0.csv",
-          model_descriptors="model_data/r3.0.hdf5",
-          nroots=36,
-          onebody_params=["t"],
-          twobody_params=["U"],
-          w_0=0.7,
-          beta=0,
-          p=5
-        )
+if __name__ == "__main__":
+    import itertools
+    parameter_sets = [
+        #(['E0', 't'], ['U']),
+        #(['E0', 't', 'tdiag'], ['U']),
+        (['E0', 't'], ['U', 'V']),
+        #(['E0', 't'], ['U', 'J']),
+        #(['E0', 't'], ['U', 'V', 'J']),
+        #(['E0', 't'], ['J']),
+
+        #(['E0', 't'], ['U', 'V','J']),
+        #(['E0', 't','tdiag'], ['U', 'V','J']),
+    ]
+    for parameters, r, state_cutoff, w0 in itertools.product(parameter_sets,
+                                          ['r2.4', 'r2.8', 'r3.2', 'r3.6',  'r4.0', 'r4.4', 'r4.8'],
+                                          [10],
+                                          [0.6, 0.7, 0.8, 0.9, 1.0]):
+        for i in range(10):
+            pname = make_name(parameters)
+            dirname = f"model_data_{state_cutoff}_{w0}"
+            if not os.path.exists(dirname):
+                os.makedirs(dirname)
+            runCV(named_terms="symmetric_operators.hdf5",
+                    ai_descriptors=f"ai_data/{r}.csv",
+                    model_descriptors=f"{dirname}/{pname}_{i}_{r}.hdf5",
+                    nroots=36,
+                    onebody_params=parameters[0],
+                    twobody_params=parameters[1],
+                    w_0=w0,
+                    beta=0,
+                    p=1,
+                    state_cutoff=state_cutoff,
+                    )

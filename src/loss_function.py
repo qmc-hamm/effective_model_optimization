@@ -254,12 +254,14 @@ def CV_evaluate_loss(
     distance = np.vstack((distance, np.tile(w_0 * penalty, (npenalty, 1))))
 
     row_ind, col_ind = linear_sum_assignment(distance_train)
+    #print("loss before reindexing", np.sum(distance_train[row_ind, col_ind]))
     for p in np.sort(test_states):
         ind = np.where(row_ind == p)[0][0]
         for i in range(ind, len(row_ind)):
             row_ind[i] += 1
 
     loss = np.sum(distance[row_ind, col_ind])
+    #print("loss after reindexing", loss)
 
     # mapping the left over train states with left over model states
 
@@ -279,6 +281,7 @@ def CV_evaluate_loss(
     return {
         "train_loss": loss,  # train loss
         "test_loss": test_loss,
+        "norm": norm,
         "train_sloss": np.sum(dist_energy[train_row_inds, train_col_inds]),
         "train_dloss": np.sum(dist_des[train_row_inds, train_col_inds]),
         "test_sloss": np.sum(dist_energy[test_row_inds, test_col_inds]),

@@ -1,8 +1,10 @@
 # Python cache files
 __pycache__/*
 src/__pycache__/*
+*.pyc
 
 # In between Cross-Validation folders to exclude
 # Folders will be processed into csv data to be viewed
 CVmodels/*
 old_models/*
+h4_example/model_data*

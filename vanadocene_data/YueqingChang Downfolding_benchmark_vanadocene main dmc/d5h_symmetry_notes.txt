@@ -1,0 +1,2 @@
+# Issue with the generated symmetry terms. There should be one hopping term.
+# Can check the U (double occupancy) terms to see what the issue is.

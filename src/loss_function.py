@@ -314,6 +314,7 @@ def mapping(
     beta: float,
     p: int,
     guess_params=None,
+    clip_val=1,
 ):
     """Sets up the loss function to then optimize.
 
@@ -352,6 +353,10 @@ def mapping(
     guess_params : pd.Series
         Guess parameters to override the DMD parameters if so desired. dict (keys are strings, values are floats)
         overrides the dmd parameters
+    clip_val : int or (future) np.array
+        clips the norm to be from range [clip_val, max(norm)]. Solves the issue where data for descriptor has 
+        small variance. The array of clip_vals should make up the maximum possible spread that the descriptors can take
+        so that the applying the norm onto the data should always range between 0 and 1.
     """
     p_out_states = np.random.choice(np.arange(0, len(ai_df)), size=p, replace=False)
     #  p_out_states = np.array([p]) # this p is for 30-k_groups, leaving out data 1-by-1
@@ -376,7 +381,13 @@ def mapping(
 
     print("Starting Parameters: ", params)
 
-    norm = 2 * np.var(ai_df)  # Should this be based on the ai_df_train? I think not.
+    ai_var = np.var(ai_df)
+    #print("Before clipping:\n", ai_var)
+    des_var = ai_var.loc[ai_var.index != 'energy'] 
+    des_var = np.clip(des_var, clip_val, np.max(des_var))  # clip so that small variances are set to 1
+    ai_var.loc[ai_var.index != 'energy'] = des_var
+    #print("After clipping:\n", ai_var)
+    norm = 2 * ai_var  # Normalizes the units
 
     keys = params.keys()
     x0 = params.values

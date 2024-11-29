@@ -12,6 +12,6 @@ Repository for the latest workflow to create an effective model Hamiltonians wit
 
 # How to run
 
-inside h4_example
+Inside `h4_example` run:
 
 ``` python cross_validation_function.py ```

@@ -125,6 +125,7 @@ def evaluate_loss(
     matches,
     fcivec,
     norm,
+    r,
 ) -> float:
     """The actual Loss functional.
 
@@ -168,14 +169,14 @@ def evaluate_loss(
     w_1 = weights[1]
 
     if fcivec is None and "fcivec" in cache:
-        fcivec = cache["fcivec"]
+        fcivec = cache[f"fcivec_{r}"]
 
     params = pd.Series(params, index=keys)
 
     descriptors, fcivec = solver.solve_effective_hamiltonian(
         onebody, twobody, params, nroots=nroots, ci0=fcivec
     )
-    cache["fcivec"] = fcivec
+    cache[f"fcivec_{r}"] = fcivec
 
     dist_des = descriptor_distance(
         ai_df, descriptors, matches=matches, norm=norm
@@ -228,20 +229,21 @@ def CV_evaluate_loss(
     norm,
     train_states,
     test_states,
+    r,
 ) -> float:
 
     w_0 = weights[0]
     w_1 = weights[1]
 
     if fcivec is None and "fcivec" in cache:
-        fcivec = cache["fcivec"]
+        fcivec = cache[f"fcivec_{r}"]
 
     params = pd.Series(params, index=keys)
 
     descriptors, fcivec = solver.solve_effective_hamiltonian(
         onebody, twobody, params, nroots=nroots, ci0=None
     )
-    cache["fcivec"] = fcivec
+    cache[f"fcivec_{r}"] = fcivec
 
     dist_des = descriptor_distance(ai_df, descriptors, matches=matches, norm=norm)
     dist_energy = descriptor_distance(ai_df, descriptors, matches=["energy"], norm=norm)
@@ -362,7 +364,8 @@ def evaluate_loss_CV_para_function(
                                            None,
                                            norm_rs[f'r{r}'],
                                            train_states_rs[f'r{r}'],
-                                           test_states_rs[f'r{r}'])
+                                           test_states_rs[f'r{r}'],
+                                           r)
         sum_loss += losses[f'r{r}']["train_loss"]
 
     losses["sum_loss"] = sum_loss
@@ -392,6 +395,8 @@ def mapping(
     p: int,
     guess_params=None,
     clip_val=1,
+    niter_opt=1000,
+    tol_opt=1e-7,
 ):  
     ai_df_train_rs = {}
     ai_df_test_rs = {}
@@ -487,8 +492,8 @@ def mapping(
         ),
         jac="3-point",
         method="Powell",
-        tol=1e-7,
-        options={"maxiter": 1000},
+        tol=tol_opt,
+        options={"maxiter": niter_opt},
     )
 
     print(xmin.nit, xmin.nfev)

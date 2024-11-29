@@ -1,7 +1,8 @@
 import h5py
 import pandas as pd
-import loss_function_para_function
+import loss_function_function as loss_function
 import os
+import itertools
 
 
 def runCV(named_terms,
@@ -46,7 +47,7 @@ def runCV(named_terms,
     matches = onebody_params + twobody_params
     weights = [w0, 1 - w0]
 
-    loss_function_para_function.mapping(
+    loss_function.mapping(
         onebody,
         twobody,
         onebody_params,
@@ -60,6 +61,8 @@ def runCV(named_terms,
         beta,
         p,
         guess_params,
+        niter_opt = 1,
+        tol_opt = 1.0,
     )
 
 
@@ -68,7 +71,7 @@ def make_name(parameters):
 
 
 if __name__ == "__main__":
-    import itertools
+    # Hyperparameters
     parameter_sets = [
         (['E0', 't'], ['U']),
         #(['E0', 't', 'tdiag'], ['U']),
@@ -76,18 +79,31 @@ if __name__ == "__main__":
         #(['E0', 't'], ['U', 'J']),
         #(['E0', 't'], ['U', 'V', 'J']),
         #(['E0', 't'], ['J']),
-
-        #(['E0', 't'], ['U', 'V','J']),
+        #(['E0'], ['U', 'J']),
+        #(['E0', 't','tdiag'], ['U', 'J']),
+        #(['E0', 't','tdiag'], ['U', 'V']),
         #(['E0', 't','tdiag'], ['U', 'V','J']),
     ]
-    rs_sets = [
-        [2.2, 2.8, 3.2, 3.6, 4.0, 4.4, 4.8, 5.0, 6.0, 7.0]
+    rs_set = [
+        #[2.2, 2.8, 3.2, 3.6, 4.0, 4.4, 4.8, 5.0, 6.0, 7.0]
+        [2.2, 2.8, 3.2, 3.6, 4.0, 4.4] # Test Workflow
     ]
+    state_cutoffs = [
+        10 # Test Workflow
+        # 6, 8, 10, 12, 14
+    ]
+    w0s = [
+        # 1.0, 0.95, 0.9, 0.85, 0.8
+        # 1.0, 0.9, 0.8, 0.7, 0.6
+        0.9, 0.8 # Test Workflow
+    ]
+
+    # Hyperparameter sweep step
     for parameters, rs, state_cutoff, w0 in itertools.product(parameter_sets,
-                                                             rs_sets,
+                                                             rs_set,
                                                              [10],
-                                                             [0.9]):
-        for i in range(10):
+                                                             w0s):
+        for i in range(1):
             pname = make_name(parameters)
             dirname = f"func_model_data_{state_cutoff}_{w0}"
             if not os.path.exists(dirname):

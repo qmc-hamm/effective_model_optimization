@@ -101,7 +101,7 @@ if __name__ == "__main__":
     # Hyperparameter sweep step
     for parameters, rs, state_cutoff, w0 in itertools.product(parameter_sets,
                                                              rs_set,
-                                                             [10],
+                                                             state_cutoffs,
                                                              w0s):
         for i in range(1):
             pname = make_name(parameters)

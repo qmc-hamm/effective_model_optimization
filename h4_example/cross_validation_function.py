@@ -99,12 +99,14 @@ if __name__ == "__main__":
         0.9, 0.8 # Test Workflow
     ]
 
+    nCV_iter = 1 # Number of cross validation iterations
+
     # Hyperparameter sweep step
     for parameters, rs, state_cutoff, w0 in itertools.product(parameter_sets,
                                                              rs_set,
                                                              state_cutoffs,
                                                              w0s):
-        for i in range(1):
+        for i in range(nCV_iter):
             pname = make_name(parameters)
             dirname = f"func_model_data_{state_cutoff}_{w0}"
             if not os.path.exists(dirname):

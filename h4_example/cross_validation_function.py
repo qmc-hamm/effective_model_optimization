@@ -64,14 +64,9 @@ def runCV(named_terms,
         beta,
         p,
         guess_params,
-<<<<<<< HEAD
-        niter_opt = 1,  # little optimization set to test workflow
-        tol_opt = 1.0,  # little optimization set to test workflow
-        maxfev_opt = 1, # little optimization set to test workflow
-=======
         niter_opt = niter_opt,
-        tol_opt = 1.0,
->>>>>>> b843771 (Parameterize the training script)
+        tol_opt = tol_opt,
+        maxfev_opt = 1, # little optimization set to test workflow
     )
 
 

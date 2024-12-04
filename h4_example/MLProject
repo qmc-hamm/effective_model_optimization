@@ -11,6 +11,8 @@ entry_points:
         parameter1: {type: string, default: "U"}
         niter_opt: {type: float, default: 1}
         tol_opt: {type: float, default: 1}
+        maxfev_opt: {type: float, default: 1}
+        nCV_iter: {type: float, default: 1}
 
     command: "python cross_validation_function.py \
               --state_cutoff {state_cutoff} \
@@ -18,4 +20,5 @@ entry_points:
               --w0 {w0} \
               --niter_opt {niter_opt} \
               --tol_opt {tol_opt} \
+              --maxfev_opt {maxfev_opt} \
               --parameters {parameter0} {parameter1}"

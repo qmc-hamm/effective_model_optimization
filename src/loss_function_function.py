@@ -397,7 +397,8 @@ def mapping(
     clip_val=1,
     niter_opt=1000,
     tol_opt=1e-7,
-):  
+    maxfev_opt=10000,
+):
     ai_df_train_rs = {}
     ai_df_test_rs = {}
     max_ai_energy_rs = {}
@@ -415,7 +416,7 @@ def mapping(
 
         train_states_rs[f'r{r}'] = np.delete(np.arange(0, len(ai_df)), p_out_states)
         test_states_rs[f'r{r}'] = p_out_states
-    
+
     #boltzmann_weights_train = give_boltzmann_weights(ai_df_train["energy"], ai_df["energy"][0], beta)
     #print(f"Boltzmann weights for beta {beta}: {boltzmann_weights_train}")
     #boltzmann_weights_test = give_boltzmann_weights(ai_df_test["energy"], ai_df["energy"][0], beta)
@@ -493,7 +494,7 @@ def mapping(
         jac="3-point",
         method="Powell",
         tol=tol_opt,
-        options={"maxiter": niter_opt},
+        options={"maxiter": niter_opt, "maxfev": maxfev_opt},
     )
 
     print(xmin.nit, xmin.nfev)

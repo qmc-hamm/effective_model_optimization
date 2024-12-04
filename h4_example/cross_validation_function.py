@@ -5,6 +5,7 @@ import os
 import itertools
 import argparse
 import sys
+import mlflow
 
 def runCV(named_terms,
           ai_dir,
@@ -20,7 +21,8 @@ def runCV(named_terms,
           guess_params=None,
           state_cutoff=None,
           niter_opt=1,
-          tol_opt=1.0
+          tol_opt=1.0,
+          maxfev_opt=1.0
 ):
 
     onebody = {}
@@ -73,26 +75,28 @@ def runCV(named_terms,
 def make_name(parameters):
     return "_".join(parameters[0]) + "_" + "_".join(parameters[1])
 
-def main(parameters, state_cutoff, w0, rs, niter_opt, tol_opt):
-    for i in range(1):
-        pname = make_name(parameters)
-        dirname = f"func_model_data_{state_cutoff}_{w0}"
-        if not os.path.exists(dirname):
-            os.makedirs(dirname)
-        runCV(named_terms="symmetric_operators.hdf5",
-              ai_dir="ai_data/",
-              model_descriptors=f"{dirname}/{pname}_{i}.hdf5",
-              nroots=36,
-              onebody_params=parameters[0],
-              twobody_params=parameters[1],
-              rs=rs,
-              w0=w0,
-              beta=0,
-              p=1,
-              state_cutoff=state_cutoff,
-              niter_opt=niter_opt,
-              tol_opt=tol_opt
-              )
+def main(parameters, state_cutoff, w0, rs, niter_opt, tol_opt, maxfev_opt, nCV_iter):
+    with mlflow.start_run():
+        for i in range(nCV_iter):
+            pname = make_name(parameters)
+            dirname = f"func_model_data_{state_cutoff}_{w0}"
+            if not os.path.exists(dirname):
+                os.makedirs(dirname)
+            runCV(named_terms="symmetric_operators.hdf5",
+                  ai_dir="ai_data/",
+                  model_descriptors=f"{dirname}/{pname}_{i}.hdf5",
+                  nroots=36,
+                  onebody_params=parameters[0],
+                  twobody_params=parameters[1],
+                  rs=rs,
+                  w0=w0,
+                  beta=0,
+                  p=1,
+                  state_cutoff=state_cutoff,
+                  niter_opt=niter_opt,
+                  tol_opt=tol_opt,
+                  maxfev_opt=maxfev_opt
+                  )
 
 
 if __name__ == "__main__":
@@ -104,6 +108,8 @@ if __name__ == "__main__":
         parser.add_argument("--w0", type=float)
         parser.add_argument("--niter_opt", type=int)
         parser.add_argument("--tol_opt", type=float)
+        parser.add_argument("--nCV_iter", type=int, default=1)
+        parser.add_argument("--maxfev_opt", type=int, default=1)
         args = parser.parse_args()
         parameters = (args.parameters[0].split(','), args.parameters[1].split(','))
         state_cutoff = args.state_cutoff
@@ -111,13 +117,9 @@ if __name__ == "__main__":
         rs = [float(r) for r in args.rs.split(",")]
         niter_opt = args.niter_opt
         tol_opt = args.tol_opt
-        print("Parameters ", parameters)
-        print("State Cutoff ", state_cutoff)
-        print("rs", rs)
-        print("w0", w0)
-        print("niter_opt", niter_opt)
-        print("tol_opt", tol_opt)
-        main(parameters, state_cutoff, w0, rs, niter_opt, tol_opt)
+        nCV_iter = args.nCV_iter
+        maxfev_opt = args.maxfev_opt
+        main(parameters, state_cutoff, w0, rs, niter_opt, tol_opt, maxfev_opt, nCV_iter)
     else:
         # Hyperparameters
         parameter_sets = [
@@ -146,27 +148,9 @@ if __name__ == "__main__":
             0.9, 0.8 # Test Workflow
         ]
 
-    nCV_iter = 1 # Number of cross validation iterations
-
-    # Hyperparameter sweep step
-    for parameters, rs, state_cutoff, w0 in itertools.product(parameter_sets,
-                                                             rs_set,
-                                                             state_cutoffs,
-                                                             w0s):
-        for i in range(nCV_iter):
-            pname = make_name(parameters)
-            dirname = f"func_model_data_{state_cutoff}_{w0}"
-            if not os.path.exists(dirname):
-                os.makedirs(dirname)
-            runCV(named_terms="symmetric_operators.hdf5",
-                  ai_dir="ai_data/",
-                  model_descriptors=f"{dirname}/{pname}_{i}.hdf5",
-                  nroots=36,
-                  onebody_params=parameters[0],
-                  twobody_params=parameters[1],
-                  rs=rs,
-                  w0=w0,
-                  beta=0,
-                  p=1,
-                  state_cutoff=state_cutoff,
-                  )
+        # Hyperparameter sweep step
+        for parameters, rs, state_cutoff, w0 in itertools.product(parameter_sets,
+                                                                rs_set,
+                                                                state_cutoffs,
+                                                                w0s):
+                                                                    main(parameters, state_cutoff, w0, rs)

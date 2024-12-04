@@ -11,3 +11,4 @@ h4_example/model_data*
 
 mlruns/
 .venv/
+pyrightconfig.json

@@ -397,6 +397,7 @@ def mapping(
     clip_val=1,
     niter_opt=1000,
     tol_opt=1e-7,
+    maxfev_opt=10000, 
 ):  
     ai_df_train_rs = {}
     ai_df_test_rs = {}
@@ -493,7 +494,7 @@ def mapping(
         jac="3-point",
         method="Powell",
         tol=tol_opt,
-        options={"maxiter": niter_opt},
+        options={"maxiter": niter_opt, "maxfev": maxfev_opt},
     )
 
     print(xmin.nit, xmin.nfev)

@@ -61,8 +61,9 @@ def runCV(named_terms,
         beta,
         p,
         guess_params,
-        niter_opt = 1,
-        tol_opt = 1.0,
+        niter_opt = 1,  # little optimization set to test workflow
+        tol_opt = 1.0,  # little optimization set to test workflow
+        maxfev_opt = 1, # little optimization set to test workflow
     )
 
 

@@ -552,6 +552,8 @@ def mapping(
             "para_w_1": weights[1],
         })
 
+        f["Mean over r Spectrum RMSE (Ha) - Train"] = data["Mean over r Spectrum RMSE (Ha) - Train"]
+        f["Mean over r Spectrum RMSE (Ha) - Validation"] = data["Mean over r Spectrum RMSE (Ha) - Validation"]
 
         for i, r in enumerate(rs):
             data_r = data[f"r{r}"]

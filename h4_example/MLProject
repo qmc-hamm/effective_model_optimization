@@ -1,0 +1,21 @@
+name: Effective Model Optimization
+
+python_env: python_env.yaml
+entry_points:
+  main:
+    parameters:
+        state_cutoff: {type: float, default: 10}
+        rs: {type: str, default: "2.2, 2.8, 3.2, 3.6, 4.0, 4.4"}
+        w0: {type: float, default: 0.9}
+        parameter0: {type: string, default: "E0,t"}
+        parameter1: {type: string, default: "U"}
+        niter_opt: {type: float, default: 1}
+        tol_opt: {type: float, default: 1}
+
+    command: "python cross_validation_function.py \
+              --state_cutoff {state_cutoff} \
+              --rs {rs} \
+              --w0 {w0} \
+              --niter_opt {niter_opt} \
+              --tol_opt {tol_opt} \
+              --parameters {parameter0} {parameter1}"

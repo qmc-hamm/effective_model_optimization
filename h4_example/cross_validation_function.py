@@ -3,7 +3,8 @@ import pandas as pd
 import loss_function_function as loss_function
 import os
 import itertools
-
+import argparse
+import sys
 
 def runCV(named_terms,
           ai_dir,
@@ -17,8 +18,10 @@ def runCV(named_terms,
           beta=0,
           p=0,
           guess_params=None,
-          state_cutoff=None
-): 
+          state_cutoff=None,
+          niter_opt=1,
+          tol_opt=1.0
+):
 
     onebody = {}
     twobody = {}
@@ -61,43 +64,92 @@ def runCV(named_terms,
         beta,
         p,
         guess_params,
+<<<<<<< HEAD
         niter_opt = 1,  # little optimization set to test workflow
         tol_opt = 1.0,  # little optimization set to test workflow
         maxfev_opt = 1, # little optimization set to test workflow
+=======
+        niter_opt = niter_opt,
+        tol_opt = 1.0,
+>>>>>>> b843771 (Parameterize the training script)
     )
 
 
 def make_name(parameters):
     return "_".join(parameters[0]) + "_" + "_".join(parameters[1])
 
+def main(parameters, state_cutoff, w0, rs, niter_opt, tol_opt):
+    for i in range(1):
+        pname = make_name(parameters)
+        dirname = f"func_model_data_{state_cutoff}_{w0}"
+        if not os.path.exists(dirname):
+            os.makedirs(dirname)
+        runCV(named_terms="symmetric_operators.hdf5",
+              ai_dir="ai_data/",
+              model_descriptors=f"{dirname}/{pname}_{i}.hdf5",
+              nroots=36,
+              onebody_params=parameters[0],
+              twobody_params=parameters[1],
+              rs=rs,
+              w0=w0,
+              beta=0,
+              p=1,
+              state_cutoff=state_cutoff,
+              niter_opt=niter_opt,
+              tol_opt=tol_opt
+              )
+
 
 if __name__ == "__main__":
-    # Hyperparameters
-    parameter_sets = [
-        (['E0', 't'], ['U']),
-        #(['E0', 't', 'tdiag'], ['U']),
-        #(['E0', 't'], ['U', 'V']),
-        #(['E0', 't'], ['U', 'J']),
-        #(['E0', 't'], ['U', 'V', 'J']),
-        #(['E0', 't'], ['J']),
-        #(['E0'], ['U', 'J']),
-        #(['E0', 't','tdiag'], ['U', 'J']),
-        #(['E0', 't','tdiag'], ['U', 'V']),
-        #(['E0', 't','tdiag'], ['U', 'V','J']),
-    ]
-    rs_set = [
-        #[2.2, 2.8, 3.2, 3.6, 4.0, 4.4, 4.8, 5.0, 6.0, 7.0]
-        [2.2, 2.8, 3.2, 3.6, 4.0, 4.4] # Test Workflow
-    ]
-    state_cutoffs = [
-        10 # Test Workflow
-        # 6, 8, 10, 12, 14
-    ]
-    w0s = [
-        # 1.0, 0.95, 0.9, 0.85, 0.8
-        # 1.0, 0.9, 0.8, 0.7, 0.6
-        0.9, 0.8 # Test Workflow
-    ]
+    if len(sys.argv) > 1:
+        parser = argparse.ArgumentParser()
+        parser.add_argument("--parameters", type=str, nargs="+")
+        parser.add_argument("--rs", type=str)
+        parser.add_argument("--state_cutoff", type=int)
+        parser.add_argument("--w0", type=float)
+        parser.add_argument("--niter_opt", type=int)
+        parser.add_argument("--tol_opt", type=float)
+        args = parser.parse_args()
+        parameters = (args.parameters[0].split(','), args.parameters[1].split(','))
+        state_cutoff = args.state_cutoff
+        w0 = args.w0
+        rs = [float(r) for r in args.rs.split(",")]
+        niter_opt = args.niter_opt
+        tol_opt = args.tol_opt
+        print("Parameters ", parameters)
+        print("State Cutoff ", state_cutoff)
+        print("rs", rs)
+        print("w0", w0)
+        print("niter_opt", niter_opt)
+        print("tol_opt", tol_opt)
+        main(parameters, state_cutoff, w0, rs, niter_opt, tol_opt)
+    else:
+        # Hyperparameters
+        parameter_sets = [
+            (['E0', 't'], ['U']),
+            #(['E0', 't', 'tdiag'], ['U']),
+            #(['E0', 't'], ['U', 'V']),
+            #(['E0', 't'], ['U', 'J']),
+            #(['E0', 't'], ['U', 'V', 'J']),
+            #(['E0', 't'], ['J']),
+            #(['E0'], ['U', 'J']),
+            #(['E0', 't','tdiag'], ['U', 'J']),
+            #(['E0', 't','tdiag'], ['U', 'V']),
+            #(['E0', 't','tdiag'], ['U', 'V','J']),
+        ]
+        rs_set = [
+            #[2.2, 2.8, 3.2, 3.6, 4.0, 4.4, 4.8, 5.0, 6.0, 7.0]
+            [2.2, 2.8, 3.2, 3.6, 4.0, 4.4] # Test Workflow
+        ]
+        state_cutoffs = [
+            10 # Test Workflow
+            # 6, 8, 10, 12, 14
+        ]
+        w0s = [
+            # 1.0, 0.95, 0.9, 0.85, 0.8
+            # 1.0, 0.9, 0.8, 0.7, 0.6
+            0.9, 0.8 # Test Workflow
+        ]
 
     nCV_iter = 1 # Number of cross validation iterations
 

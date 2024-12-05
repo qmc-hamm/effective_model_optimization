@@ -8,3 +8,6 @@ src/__pycache__/*
 CVmodels/*
 old_models/*
 h4_example/model_data*
+
+mlruns/
+.venv/

@@ -1,3 +1,4 @@
+import mlflow
 import pandas as pd
 import statsmodels.api as sm
 import h5py
@@ -380,8 +381,10 @@ def evaluate_loss_CV_para_function(
         sum_spec_rmse_val += losses[f'r{r}']["Spectrum RMSE Val (Ha)"]
 
     losses["sum_loss"] = sum_loss
-    losses["Mean over r Spectrum RMSE (Ha) - Train"] = np.mean(sum_spec_rmse_train)
-    losses["Mean over r Spectrum RMSE (Ha) - Validation"] = np.mean(sum_spec_rmse_val)
+    mean_over_r_spectrum_rmse_ha_train = np.mean(sum_spec_rmse_train)
+    mean_over_r_spectrum_rmse_ha_val = np.mean(sum_spec_rmse_val)
+    losses["Mean over r Spectrum RMSE (Ha) - Train"] = mean_over_r_spectrum_rmse_ha_train
+    losses["Mean over r Spectrum RMSE (Ha) - Validation"] = mean_over_r_spectrum_rmse_ha_val
 
     print(x0)
     print(sum_loss)
@@ -540,6 +543,16 @@ def mapping(
         f["Mean over r Spectrum RMSE (Ha) - Train"] = data["Mean over r Spectrum RMSE (Ha) - Train"]
         f["Mean over r Spectrum RMSE (Ha) - Validation"] = data["Mean over r Spectrum RMSE (Ha) - Validation"]
 
+        mlflow.log_metrics({
+            "loss": xmin.fun,
+            "mean_over_r_spectrum_rmse_ha_train": data["Mean over r Spectrum RMSE (Ha) - Train"],
+            "mean_over_r_spectrum_rmse_ha_val": data["Mean over r Spectrum RMSE (Ha) - Validation"],
+            "sum-loss": data["sum_loss"],
+            "para_w_0": weights[0],
+            "para_w_1": weights[1],
+        })
+
+
         for i, r in enumerate(rs):
             data_r = data[f"r{r}"]
 
@@ -570,3 +583,5 @@ def mapping(
 
         f["iterations"] = xmin.nit
         f["termination_message"] = xmin.message
+
+    mlflow.log_artifact(outfile)

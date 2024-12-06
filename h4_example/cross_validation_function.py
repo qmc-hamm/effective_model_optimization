@@ -103,8 +103,8 @@ def main(parameters, state_cutoff, w0, rs, niter_opt, tol_opt, maxfev_opt, nCV_i
                   maxfev_opt=maxfev_opt
                   )
             mlflow.log_artifact(model_file_path)
-            plot = plot_model(model_file_path, parameters)
-            mlflow.log_artifact(plot)
+            # plot = plot_model(model_file_path, parameters)
+            # mlflow.log_artifact(plot)
 
 
 if __name__ == "__main__":
@@ -120,8 +120,6 @@ if __name__ == "__main__":
         parser.add_argument("--maxfev_opt", type=int, default=1)
         args = parser.parse_args()
         parameters = (args.parameters[0].split(','), args.parameters[1].split(','))
-        print(f"parameters: {parameters}")
-        sys.exit(0)
         state_cutoff = args.state_cutoff
         w0 = args.w0
         rs = [float(r) for r in args.rs.split(",")]

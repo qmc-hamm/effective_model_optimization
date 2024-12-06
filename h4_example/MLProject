@@ -22,3 +22,6 @@ entry_points:
               --tol_opt {tol_opt} \
               --maxfev_opt {maxfev_opt} \
               --parameters {parameter0} {parameter1}"
+
+  scan:
+    command: "python scan.py"

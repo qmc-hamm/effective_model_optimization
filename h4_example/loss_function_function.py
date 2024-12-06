@@ -576,8 +576,10 @@ def mapping(
                     for kk in data_r[k]:
                         f[f"r{r}/" + "train/" + k + "/" + kk] = data_r[k][kk]
                 elif k == "params":
-                    for i, kk in enumerate(onebody_params + twobody_params):
-                        f[f"r{r}/" + "rdmd_params/" + kk] = data_r[k][i]
+                    for kk in onebody_params:
+                        f[f"r{r}/" + "rdmd_params/onebody/" + kk] = data_r[k][kk]
+                    for kk in twobody_params:
+                        f[f"r{r}/" + "rdmd_params/twobody/" + kk] = data_r[k][kk]
                 else:
                     f[f"r{r}/" + k] = data_r[k]
 

@@ -24,9 +24,11 @@ def gather_data_to_plot(fname, parameters):
             data_r['Spectrum RMSE Train (Ha)'] = f[f'r{r}/Spectrum RMSE Train (Ha)'][()]
             data_r['Spectrum RMSE Val (Ha)'] = f[f'r{r}/Spectrum RMSE Val (Ha)'][()]
             print("rs", f['rs'])
-            print("rdmd->", f[f'r{r}/rdmd_params'].keys())
-            for parameter in parameters:
-                data_r[f'{parameter} (Ha)'] = f[f'r{r}/rdmd_params/{parameter}'][()]
+            print("rdmd->", f[f'r{r}/rdmd_params/onebody'].keys(), f[f'r{r}/rdmd_params/twobody'].keys())
+            for parameter in parameters[0]:
+                data_r[f'{parameter} (Ha)'] = f[f'r{r}/rdmd_params/onebody/{parameter}'][()]
+            for parameter in parameters[1]:
+                data_r[f'{parameter} (Ha)'] = f[f'r{r}/rdmd_params/twobody/{parameter}'][()]
 
             data.append(data_r) 
 

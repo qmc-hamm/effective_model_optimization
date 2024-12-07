@@ -7,7 +7,7 @@ dependencies:
   - pip
   - pip:
         - mlflow-skinny==2.18
-        - mlflow-slurm==1.0.6a2
+        - mlflow-slurm==1.0.6
         - h5py==3.12.1
         - statsmodels==0.14.4
         - pyscf==2.7.0

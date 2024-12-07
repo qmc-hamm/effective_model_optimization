@@ -5,7 +5,7 @@ from mlflow import MlflowClient
 from mlflow.entities import Param, RunTag
 
 
-def run_train(experiment_id, iters, backend_config="slurm_config.json", parent_run_id=None):
+def run_train(experiment_id, iters, backend_config="cpu-slurm.json", parent_run_id=None):
     p = mlflow.projects.run(
         uri=os.path.dirname(os.path.realpath(__file__)),
         entry_point="main",
@@ -15,9 +15,9 @@ def run_train(experiment_id, iters, backend_config="slurm_config.json", parent_r
             "nCV_iter": str(iters)
         },
         experiment_id=experiment_id,
-        synchronous=True,
-        backend="local",
-        # backend_config=backend_config
+        synchronous=False,
+        backend="slurm",
+        backend_config=backend_config
     )
     MlflowClient().log_batch(run_id=p.run_id, metrics=[],
                              params=[Param("niter_opt", str(iters)),

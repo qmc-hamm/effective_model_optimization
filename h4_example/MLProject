@@ -1,6 +1,7 @@
 name: Effective Model Optimization
 
 python_env: python_env.yaml
+# conda_env: conda.yaml
 entry_points:
   main:
     parameters:
@@ -24,4 +25,10 @@ entry_points:
               --parameters {parameter0} {parameter1}"
 
   scan:
-    command: "python scan.py"
+      parameters:
+        training_backend: {type: str, default: "local"}
+        training_backend_config: {type: str, default: none}
+
+      command: "python scan.py \
+                --training_backend {training_backend} \
+                --training_backend_config {training_backend_config}"

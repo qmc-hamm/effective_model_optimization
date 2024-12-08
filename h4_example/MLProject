@@ -1,15 +1,23 @@
 name: Effective Model Optimization
+#  MLFlow project to create an effective model Hamiltonians with uncertainty analysis.
 
+# You can either use the python_env (easiest on your laptop) or
+# conda_env (neccessary for HPC) to specify the environment.
 python_env: python_env.yaml
 # conda_env: conda.yaml
+
 entry_points:
   main:
+    # Run a single cross-validation training step
     parameters:
         state_cutoff: {type: float, default: 10}
         rs: {type: str, default: "2.2, 2.8, 3.2, 3.6, 4.0, 4.4"}
         w0: {type: float, default: 0.9}
         parameter0: {type: string, default: "E0,t"}
         parameter1: {type: string, default: "U"}
+
+        # These parameters can be used to make quick training
+        # runs for debugging purposes.
         niter_opt: {type: float, default: 1}
         tol_opt: {type: float, default: 1}
         maxfev_opt: {type: float, default: 1}
@@ -25,8 +33,17 @@ entry_points:
               --parameters {parameter0} {parameter1}"
 
   scan:
-      parameters:
-        training_backend: {type: str, default: "local"}
+    # Run a scan over a parameter space. Launches multiple cross-validation
+    # training steps in parallel using the MLFlow main entry point above.
+    parameters:
+        # Most of the hyperparemter settings are managed in the python script
+        # script, scan.py. These parameters control how it launches the training
+        # jobs. They can either be local, sycnhronous jobs, or jobs that are
+        # launched on a remote cluster using slurm.
+        training_backend: {type: str, default: "local"}  # local, slurm
+
+        # If training_backend is slurm, then this is the json  configuration file
+        # that is used to configure the slurm job.
         training_backend_config: {type: str, default: none}
 
       command: "python scan.py \

@@ -31,7 +31,6 @@ entry_points:
               --tol_opt {tol_opt} \
               --maxfev_opt {maxfev_opt} \
               --parameters {parameter0} {parameter1}"
-
   scan:
     # Run a scan over a parameter space. Launches multiple cross-validation
     # training steps in parallel using the MLFlow main entry point above.
@@ -46,6 +45,6 @@ entry_points:
         # that is used to configure the slurm job.
         training_backend_config: {type: str, default: none}
 
-      command: "python scan.py \
+    command: "python scan.py \
                 --training_backend {training_backend} \
                 --training_backend_config {training_backend_config}"

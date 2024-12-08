@@ -10,11 +10,10 @@ def make_name(parameters):
 
 
 def gather_data_to_plot(fname, parameters):
-
     data = []
 
     with h5py.File(fname, 'r') as f:
-        
+
         rs = f['rs'][()]
 
         for r in rs:
@@ -23,19 +22,20 @@ def gather_data_to_plot(fname, parameters):
 
             data_r['Spectrum RMSE Train (Ha)'] = f[f'r{r}/Spectrum RMSE Train (Ha)'][()]
             data_r['Spectrum RMSE Val (Ha)'] = f[f'r{r}/Spectrum RMSE Val (Ha)'][()]
-            print("rs", f['rs'])
-            print("rdmd->", f[f'r{r}/rdmd_params'].keys())
+
             for parameter in parameters:
                 data_r[f'{parameter} (Ha)'] = f[f'r{r}/rdmd_params/{parameter}'][()]
 
-            data.append(data_r) 
+            data.append(data_r)
 
     return pd.DataFrame(data)
 
 
 def plot_model(fname: str, parameters: tuple[list[str], list[str]]) -> str:
     print(f"Plotting model {fname} using parameters {parameters}")
-    df = gather_data_to_plot(fname, parameters)
+    pname = make_name(parameters)
+
+    df = gather_data_to_plot(fname, parameters[0]+parameters[1])
 
     dirname = "model_plots"
     if not os.path.exists(dirname):

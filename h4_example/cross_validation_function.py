@@ -103,8 +103,8 @@ def main(parameters, state_cutoff, w0, rs, niter_opt, tol_opt, maxfev_opt, nCV_i
                   maxfev_opt=maxfev_opt
                   )
             mlflow.log_artifact(model_file_path)
-            # plot = plot_model(model_file_path, parameters)
-            # mlflow.log_artifact(plot)
+            plot = plot_model(model_file_path, parameters)
+            mlflow.log_artifact(plot)
 
 
 if __name__ == "__main__":

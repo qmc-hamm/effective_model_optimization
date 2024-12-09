@@ -1,3 +1,5 @@
+import tempfile
+
 import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
@@ -9,11 +11,10 @@ def make_name(parameters):
     return "_".join(parameters[0]) + "_" + "_".join(parameters[1])
 
 
-def gather_data_to_plot(fname, parameters):
+def gather_data_to_plot(dirname, fname, parameters):
     data = []
 
-    with h5py.File(fname, 'r') as f:
-
+    with h5py.File(os.path.join(dirname, fname), 'r') as f:
         rs = f['rs'][()]
 
         for r in rs:
@@ -31,15 +32,8 @@ def gather_data_to_plot(fname, parameters):
     return pd.DataFrame(data)
 
 
-def plot_model(fname: str, parameters: tuple[list[str], list[str]]) -> str:
-    print(f"Plotting model {fname} using parameters {parameters}")
-    pname = make_name(parameters)
-
-    df = gather_data_to_plot(fname, parameters[0]+parameters[1])
-
-    dirname = "model_plots"
-    if not os.path.exists(dirname):
-        os.makedirs(dirname)
+def plot_model(dirname: str, fname: str, parameters: tuple[list[str], list[str]]) -> str:
+    df = gather_data_to_plot(dirname, fname, parameters[0]+parameters[1])
 
     plot_file = f'{dirname}/Spectrum_RMSEvs_r.png'
     sns.lineplot(data=df, x='r (Bohr)', y='Spectrum RMSE Train (Ha)', label="Train")
@@ -64,7 +58,7 @@ if __name__ == "__main__":
     pname = make_name(parameters)
     i = 0
 
-    plot_model(f"func_model_data_{state_cutoff}_{w0}/{pname}_{i}.hdf5",
+    plot_model(".", f"func_model_data_{state_cutoff}_{w0}/{pname}_{i}.hdf5",
                (['E0', 't'], ['U']) )
 
     

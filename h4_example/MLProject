@@ -18,10 +18,10 @@ entry_points:
 
         # These parameters can be used to make quick training
         # runs for debugging purposes.
-        niter_opt: {type: float, default: 1}
-        tol_opt: {type: float, default: 1}
-        maxfev_opt: {type: float, default: 1}
-        nCV_iter: {type: float, default: 1}
+        niter_opt: {type: float, default: 1000}
+        tol_opt: {type: float, default: 1e-7}
+        maxfev_opt: {type: float, default: 10000}
+        nCV_iter: {type: float, default: 10}
 
     command: "python cross_validation_function.py \
               --state_cutoff {state_cutoff} \

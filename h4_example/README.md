@@ -4,6 +4,11 @@ This project leverages MLflow to create effective model Hamiltonians
 with uncertainty analysis. The project can be executed using either a 
 Python virtual environment or a Conda environment, depending on your system setup.
 
+## Branching Strategy
+There are two main branches in this repository:
+- **prod**: This branch contains the latest stable version of the project. The MLProject file is tuned for production use on CampusCluster.
+- **develop**: This branch contains the latest development version of the project. The MLProject file is tuned for local development.
+
 ## Project Structure
 
 - **MLProject File**: Defines the project name, environments, and entry points.
@@ -92,7 +97,9 @@ from the CampusCluster login node. First, edit the `scan.py` file to specify the
 parameter space to scan. Then run the scan entry point with the slurm backend 
 configuration file.
 ```bash
-mlflow run . -e scan -P training_backend=slurm -P training_backend_config=cpu-config.yaml
+mlflow run --entry-point scan -P training_backend=slurm \
+          -P training_backend_config=cpu-slurm.json \
+          --experiment-id 4 .
 ```
 
 ## Notes

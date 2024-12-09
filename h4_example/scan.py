@@ -156,5 +156,5 @@ with mlflow.start_run(run_id=provided_run_id) as run:
             training_backend_config=args.training_backend_config,
             run_params=job_params)
         )
-        results = map(lambda job: job.wait(), jobs)
-        print(list(results))
+    results = map(lambda job: job.wait(), jobs)
+    print(list(results))

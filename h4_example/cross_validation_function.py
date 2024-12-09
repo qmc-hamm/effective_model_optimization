@@ -1,3 +1,6 @@
+import tempfile
+from tempfile import tempdir
+
 import h5py
 import pandas as pd
 import loss_function_function as loss_function
@@ -25,7 +28,8 @@ def runCV(named_terms,
           state_cutoff=None,
           niter_opt=1,
           tol_opt=1.0,
-          maxfev_opt=1.0
+          maxfev_opt=1.0,
+          tmpdirname=None
 ):
 
     onebody = {}
@@ -71,7 +75,7 @@ def runCV(named_terms,
         guess_params,
         niter_opt = niter_opt,
         tol_opt = tol_opt,
-        maxfev_opt = 1, # little optimization set to test workflow
+        maxfev_opt = 1, # little optimization set to test workflow,
     )
 
 
@@ -79,32 +83,33 @@ def make_name(parameters):
     return "_".join(parameters[0]) + "_" + "_".join(parameters[1])
 
 def main(parameters, state_cutoff, w0, rs, niter_opt, tol_opt, maxfev_opt, nCV_iter):
-    with mlflow.start_run():
-        for i in range(nCV_iter):
-            pname = make_name(parameters)
-            dirname = f"func_model_data_{state_cutoff}_{w0}"
-            if not os.path.exists(dirname):
-                os.makedirs(dirname)
-            model_file_path = f"{dirname}/{pname}_{i}.hdf5"
+        with mlflow.start_run():
+            # Write model and plots to temp dir
+            with tempfile.TemporaryDirectory() as output_dir:
+                for i in range(nCV_iter):
+                    pname = make_name(parameters)
+                    dirname = os.path.join(output_dir,f"func_model_data_{state_cutoff}_{w0}")
+                    if not os.path.exists(dirname):
+                        os.makedirs(dirname)
+                    model_file_path = f"{dirname}/{pname}_{i}.hdf5"
 
-            runCV(named_terms="symmetric_operators.hdf5",
-                  ai_dir="ai_data/",
-                  model_descriptors=model_file_path,
-                  nroots=36,
-                  onebody_params=parameters[0],
-                  twobody_params=parameters[1],
-                  rs=rs,
-                  w0=w0,
-                  beta=0,
-                  p=1,
-                  state_cutoff=state_cutoff,
-                  niter_opt=niter_opt,
-                  tol_opt=tol_opt,
-                  maxfev_opt=maxfev_opt
-                  )
-            mlflow.log_artifact(model_file_path)
-            plot = plot_model(model_file_path, parameters)
-            mlflow.log_artifact(plot)
+                    runCV(named_terms="symmetric_operators.hdf5",
+                          ai_dir="ai_data/",
+                          model_descriptors=model_file_path,
+                          nroots=36,
+                          onebody_params=parameters[0],
+                          twobody_params=parameters[1],
+                          rs=rs,
+                          w0=w0,
+                          beta=0,
+                          p=1,
+                          state_cutoff=state_cutoff,
+                          niter_opt=niter_opt,
+                          tol_opt=tol_opt,
+                          maxfev_opt=maxfev_opt
+                          )
+                    plot = plot_model(output_dir, model_file_path, parameters)
+                    mlflow.log_artifact(plot)
 
 
 if __name__ == "__main__":

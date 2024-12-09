@@ -3,8 +3,8 @@ name: Effective Model Optimization
 
 # You can either use the python_env (easiest on your laptop) or
 # conda_env (neccessary for HPC) to specify the environment.
-python_env: python_env.yaml
-# conda_env: conda.yaml
+# python_env: python_env.yaml
+conda_env: conda.yaml
 
 entry_points:
   main:

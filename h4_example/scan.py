@@ -35,7 +35,7 @@ w0s = [
 
 def prepare_mlflow_params(
         state_cutoff: Optional[float] = None,
-        rs: Optional[List[float]] = None,
+        train_rs: Optional[List[float]] = None,
         w0: Optional[float] = None,
         parameter0: Optional[List[str]] = None,
         parameter1: Optional[List[str]] = None,
@@ -49,7 +49,7 @@ def prepare_mlflow_params(
 
     Args:
         state_cutoff: Cutoff state value
-        rs: Comma-separated string of values
+        train_rs: Comma-separated string of values
         w0: Initial weight value
         parameter0: First parameter string
         parameter1: Second parameter string
@@ -67,8 +67,8 @@ def prepare_mlflow_params(
 
     if state_cutoff is not None:
         params["state_cutoff"] = str(state_cutoff)
-    if rs is not None:
-        params["rs"] = ",".join([str(r) for r in rs])
+    if train_rs is not None:
+        params["train_rs"] = ",".join([str(r) for r in train_rs])
     if w0 is not None:
         params["w0"] = str(w0)
     if parameter0 is not None:
@@ -138,14 +138,14 @@ with mlflow.start_run(run_id=provided_run_id) as run:
     jobs = []
 
     # Hyperparameter sweep step
-    for parameters, rs, state_cutoff, w0 in itertools.product(parameter_sets,
+    for parameters, train_rs, state_cutoff, w0 in itertools.product(parameter_sets,
                                                               rs_set,
                                                               state_cutoffs,
                                                               w0s):
         job_params = prepare_mlflow_params(
             parameter0=parameters[0],
             parameter1=parameters[1],
-            rs=rs,
+            train_rs=train_rs,
             state_cutoff=state_cutoff,
             w0=w0
         )

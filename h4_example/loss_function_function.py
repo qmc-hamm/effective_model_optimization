@@ -405,7 +405,8 @@ def mapping(
     nroots: int,
     outfile: str,
     matches: list,
-    rs: list,
+    train_rs: list,
+    test_rs: list,
     weights: list,
     beta: float,
     p: int,
@@ -422,7 +423,7 @@ def mapping(
     train_states_rs = {}
     test_states_rs = {}
 
-    for r in rs:
+    for r in train_rs:
         ai_df = ai_df_rs[f'r{r}']
         p_out_states = np.random.choice(np.arange(0, len(ai_df)), size=p, replace=False)
         #  p_out_states = np.array([p]) # this p is for 30-k_groups, leaving out data 1-by-1
@@ -446,10 +447,9 @@ def mapping(
     t_rs = []
     U_rs = []
 
-    for r in rs:
+    for r in train_rs:
         ai_df = ai_df_rs[f'r{r}']
         dmd = sm.OLS(ai_df["energy"], ai_df[onebody_params + twobody_params]).fit()
-        print(dmd.summary())
         params = dmd.params.copy()
         params['E0'] = ( ai_df["energy"][0] - (params['t']*ai_df["t"][0] + params['U']*ai_df["U"][0]) )/4 
         print("New E0: ", params['E0'])
@@ -464,9 +464,9 @@ def mapping(
 
     print("Parameter function initial variables (E0, t, U):")
 
-    popt_E0, pcov_E0 = curve_fit(func_E0, rs, E0_rs)
-    popt_t, pcov_t = curve_fit(func_t, rs, t_rs)
-    popt_U, pcov_U = curve_fit(func_U, rs, U_rs)
+    popt_E0, pcov_E0 = curve_fit(func_E0, train_rs, E0_rs)
+    popt_t, pcov_t = curve_fit(func_t, train_rs, t_rs)
+    popt_U, pcov_U = curve_fit(func_U, train_rs, U_rs)
 
     print("E0 : d, r_0 ", popt_E0)
     print("t  : C, d, r_0 ", popt_t)
@@ -474,7 +474,7 @@ def mapping(
 
     norm_rs = {}
 
-    for r in rs:
+    for r in train_rs:
         ai_df = ai_df_rs[f'r{r}']
         ai_var = np.var(ai_df, axis=0)
         #print("Before clipping:\n", ai_var)
@@ -494,7 +494,7 @@ def mapping(
         optimize_CV_para_function,
         x0,
         args=(
-            rs,
+            train_rs,
             keys,
             weights,
             onebody,
@@ -521,7 +521,7 @@ def mapping(
 
     print("Evaluate train data after optimization:")
     data = evaluate_loss_CV_para_function(xmin.x,
-                                     rs,
+                                     train_rs,
                                      keys,
                                      weights,
                                      onebody,
@@ -536,7 +536,7 @@ def mapping(
                                      test_states_rs)
 
     with h5py.File(outfile, "w") as f:
-        f["rs"] = rs
+        f["train_rs"] = train_rs
         f["para_w_0"] = weights[0]
         f["para_w_1"] = weights[1]
         f["loss"] = xmin.fun
@@ -554,7 +554,7 @@ def mapping(
         })
 
 
-        for i, r in enumerate(rs):
+        for i, r in enumerate(train_rs):
             data_r = data[f"r{r}"]
 
             for k in onebody_params + twobody_params:

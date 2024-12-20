@@ -17,7 +17,7 @@ def gather_data_to_plot(dirname, fname, parameters):
     data = []
 
     with h5py.File(os.path.join(dirname, fname), 'r') as f:
-        rs = f['rs'][()]
+        rs = f['train_rs'][()]
 
         for r in rs:
             data_r = {}

@@ -450,8 +450,9 @@ def mapping(
         ai_df = ai_df_rs[f'r{r}']
         dmd = sm.OLS(ai_df["energy"], ai_df[onebody_params + twobody_params]).fit()
         print(dmd.summary())
-
         params = dmd.params.copy()
+        params['E0'] = ( ai_df["energy"][0] - (params['t']*ai_df["t"][0] + params['U']*ai_df["U"][0]) )/4 
+        print("New E0: ", params['E0'])
         E0_rs.append(params['E0'])
         t_rs.append(params['t'])
         U_rs.append(params['U'])

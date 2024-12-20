@@ -30,6 +30,7 @@ entry_points:
               --niter_opt {niter_opt} \
               --tol_opt {tol_opt} \
               --maxfev_opt {maxfev_opt} \
+              --nCV_iter {nCV_iter} \
               --parameters {parameter0} {parameter1}"
   scan:
     # Run a scan over a parameter space. Launches multiple cross-validation

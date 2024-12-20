@@ -476,7 +476,6 @@ def mapping(
 
     for r in rs:
         ai_df = ai_df_rs[f'r{r}']
-        ai_var = np.var(ai_df)
         ai_var = np.var(ai_df, axis=0)
         #print("Before clipping:\n", ai_var)
         des_var = ai_var.loc[ai_var.index != 'energy']
@@ -578,8 +577,6 @@ def mapping(
                     for kk in data_r[k]:
                         f[f"r{r}/" + "train/" + k + "/" + kk] = data_r[k][kk]
                 elif k == "params":
-                    for i, kk in enumerate(onebody_params + twobody_params):
-                        f[f"r{r}/" + "rdmd_params/" + kk] = data_r[k][i]
                     for kk in onebody_params + twobody_params:
                         f[f"r{r}/" + "rdmd_params/" + kk] = data_r[k][kk]
                 else:

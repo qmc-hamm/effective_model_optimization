@@ -108,9 +108,7 @@ def main(parameters, state_cutoff, w0, rs, niter_opt, tol_opt, maxfev_opt, nCV_i
                           tol_opt=tol_opt,
                           maxfev_opt=maxfev_opt
                           )
-                    plot = plot_model(output_dir, model_file_path, parameters)
-                    mlflow.log_artifact(plot)
-
+                    plot_model(output_dir, model_file_path, parameters) # Artifacts the plots to mlflow inside function
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

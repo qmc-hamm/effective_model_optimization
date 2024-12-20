@@ -6,6 +6,8 @@ import pandas as pd
 import h5py
 import os
 
+import mlflow
+
 
 def make_name(parameters):
     return "_".join(parameters[0]) + "_" + "_".join(parameters[1])
@@ -25,7 +27,8 @@ def gather_data_to_plot(dirname, fname, parameters):
             data_r['Spectrum RMSE Val (Ha)'] = f[f'r{r}/Spectrum RMSE Val (Ha)'][()]
 
             for parameter in parameters:
-                data_r[f'{parameter} (Ha)'] = f[f'r{r}/rdmd_params/{parameter}'][()]
+                data_r[f'RDMD {parameter} (Ha)'] = f[f'r{r}/rdmd_params/{parameter}'][()]
+                data_r[f'DMD {parameter} (Ha)'] = f[f'r{r}/dmd_params/{parameter}'][()]
 
             data.append(data_r)
 
@@ -42,12 +45,18 @@ def plot_model(dirname: str, fname: str, parameters: tuple[list[str], list[str]]
     plt.savefig(plot_file)
     plt.clf()
 
+    mlflow.log_artifact(plot_file)
+
     for parameter in parameters[0]+parameters[1]:
-        sns.lineplot(data=df, x='r (Bohr)', y=f'{parameter} (Ha)')
-        plt.savefig(f'{dirname}/{parameter}vs_r.png')
+        plot_file2 = f'{dirname}/RDMD_{parameter}vs_r.png'
+        sns.lineplot(data=df, x='r (Bohr)', y=f'RDMD {parameter} (Ha)', label="RDMD")
+        sns.lineplot(data=df, x='r (Bohr)', y=f'DMD {parameter} (Ha)', label="DMD")
+        plt.savefig(plot_file2)
         plt.clf()
 
-    return plot_file
+        mlflow.log_artifact(plot_file2)
+
+    return
 
 
 if __name__ == "__main__":

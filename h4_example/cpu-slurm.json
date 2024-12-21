@@ -1,6 +1,5 @@
 {
-  "partition": "IllinoisComputes",
-  "account": "ncsa-ic",
+  "partition": "secondary",
   "time": "03:58:00",
   "exports": [
     "MODULEPATH",

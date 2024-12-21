@@ -11,7 +11,7 @@ entry_points:
     # Run a single cross-validation training step
     parameters:
         state_cutoff: {type: float, default: 10}
-        rs: {type: str, default: "2.2, 2.8, 3.2, 3.6, 4.0, 4.4"}
+        train_rs: {type: str, default: "2.2, 2.8, 3.2, 3.6, 4.0, 4.4"}
         w0: {type: float, default: 0.9}
         parameter0: {type: string, default: "E0,t"}
         parameter1: {type: string, default: "U"}
@@ -25,11 +25,12 @@ entry_points:
 
     command: "python cross_validation_function.py \
               --state_cutoff {state_cutoff} \
-              --rs {rs} \
+              --train_rs {train_rs} \
               --w0 {w0} \
               --niter_opt {niter_opt} \
               --tol_opt {tol_opt} \
               --maxfev_opt {maxfev_opt} \
+              --nCV_iter {nCV_iter} \
               --parameters {parameter0} {parameter1}"
   scan:
     # Run a scan over a parameter space. Launches multiple cross-validation

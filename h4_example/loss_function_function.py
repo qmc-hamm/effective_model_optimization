@@ -117,7 +117,6 @@ def evaluate_loss(
     params: np.ndarray,
     keys,
     weights,
-    boltzmann_weights,
     onebody,
     twobody,
     ai_df,
@@ -138,9 +137,6 @@ def evaluate_loss(
         Used to make params a pd.Series. keys should match the key names of the onebody and twobody operators.
     weights : List
         w_0, w_1
-    boltzmann_weights : nd.array(float)
-        boltztman weights, the ground state always get 1. lower energy states get more weighting then exponentially
-        decays.
     onebody : dict
         (keys are strings, values are 2D np.arrays) tij. Dictionary of the 1-body operators. Each operator of the
         shape (norb,norb).
@@ -197,23 +193,89 @@ def evaluate_loss(
 
     loss = np.sum(distance[row_ind, col_ind])
 
+    dloss_row_inds = row_ind[np.where(row_ind < len(ai_df))[0]]
+    dloss_col_inds = col_ind[np.where(row_ind < len(ai_df))[0]]
+
+    penalty_row_inds = row_ind[np.where(row_ind >= len(ai_df))[0]]
+    penalty_col_inds = col_ind[np.where(row_ind >= len(ai_df))[0]]
+
+    energy_loss = np.sum(dist_energy[dloss_row_inds, dloss_col_inds])
+    spectrum_RMSE = np.sqrt(np.mean((ai_df['energy'].values[dloss_row_inds] - descriptors['energy'][dloss_col_inds])**2))
+
     # Debugging information to test loss
     #print()
     #print("loss ", loss)
     #print("params", params.values)
 
     return {
+        "norm": norm,
+        'energy_loss': energy_loss,
         "loss": loss,
-        "sloss": np.sum(dist_energy[row_ind[:len(ai_df)], col_ind[:len(ai_df)]]),
-        "dloss": np.sum(dist_des[row_ind[:len(ai_df)], col_ind[:len(ai_df)]]),
-        "penalty": np.sum(np.tile(penalty, (npenalty, 1))[row_ind[len(ai_df):] - len(ai_df), col_ind[len(ai_df):]]), # NEEDS TO BE FIXED
+        "sloss": np.mean(dist_energy[dloss_row_inds, dloss_col_inds])*norm['energy'],
+        "dloss": np.mean(dist_des[dloss_row_inds, dloss_col_inds]),
+        "penalty": np.sum(np.tile(penalty, (npenalty, 1))[:, penalty_col_inds]),
         "descriptors": descriptors,
         "distance": distance,
         "row_ind": row_ind,
         "col_ind": col_ind,
         "params": params,
+        'Spectrum RMSE (Ha)': spectrum_RMSE,
     }
 
+def evaluate_loss_para_function(
+    x0,
+    rs,
+    keys,
+    weights,
+    onebody,
+    twobody,
+    ai_df_rs,
+    max_ai_energy_rs,
+    nroots,
+    matches,
+    fcivec,
+    norm_rs,
+):
+
+    print(keys) # E0, t, U
+
+    losses = {}
+    sum_loss = 0
+    sum_spec_rmse = 0
+
+    for r in rs:
+
+        #print(r)
+
+        E0 = func_E0(r, x0[0], x0[1])
+        t = func_t(r, x0[2], x0[3], x0[4])
+        U = func_U(r, x0[5], x0[6], x0[7], x0[8])
+
+        params = [E0, t, U]
+
+        losses[f'r{r}'] = evaluate_loss(params,
+                                           keys,
+                                           weights,
+                                           onebody,
+                                           twobody,
+                                           ai_df_rs[f'r{r}'],
+                                           max_ai_energy_rs[f'r{r}'],
+                                           nroots,
+                                           matches,
+                                           None,
+                                           norm_rs[f'r{r}'],
+                                           r)
+        sum_loss += losses[f'r{r}']["loss"]
+        sum_spec_rmse += losses[f'r{r}']["Spectrum RMSE (Ha)"]
+
+    losses["sum_loss"] = sum_loss
+    mean_over_r_spectrum_rmse_ha = np.mean(sum_spec_rmse)
+    losses["Mean over r Spectrum RMSE (Ha)"] = mean_over_r_spectrum_rmse_ha
+
+    print(x0)
+    print(sum_loss)
+
+    return losses
 
 # maps for train states first, then maps the rest of the model states to test states.
 def CV_evaluate_loss(
@@ -405,7 +467,8 @@ def mapping(
     nroots: int,
     outfile: str,
     matches: list,
-    rs: list,
+    train_rs: list,
+    test_rs: list,
     weights: list,
     beta: float,
     p: int,
@@ -422,7 +485,7 @@ def mapping(
     train_states_rs = {}
     test_states_rs = {}
 
-    for r in rs:
+    for r in (train_rs + test_rs):
         ai_df = ai_df_rs[f'r{r}']
         p_out_states = np.random.choice(np.arange(0, len(ai_df)), size=p, replace=False)
         #  p_out_states = np.array([p]) # this p is for 30-k_groups, leaving out data 1-by-1
@@ -446,12 +509,13 @@ def mapping(
     t_rs = []
     U_rs = []
 
-    for r in rs:
+    for r in (train_rs):
         ai_df = ai_df_rs[f'r{r}']
         dmd = sm.OLS(ai_df["energy"], ai_df[onebody_params + twobody_params]).fit()
-        print(dmd.summary())
-
+        #print(dmd.summary())
         params = dmd.params.copy()
+        params['E0'] = ( ai_df["energy"][0] - (params['t']*ai_df["t"][0] + params['U']*ai_df["U"][0]) )/4 
+        #print("New E0: ", params['E0'])
         E0_rs.append(params['E0'])
         t_rs.append(params['t'])
         U_rs.append(params['U'])
@@ -463,9 +527,9 @@ def mapping(
 
     print("Parameter function initial variables (E0, t, U):")
 
-    popt_E0, pcov_E0 = curve_fit(func_E0, rs, E0_rs)
-    popt_t, pcov_t = curve_fit(func_t, rs, t_rs)
-    popt_U, pcov_U = curve_fit(func_U, rs, U_rs)
+    popt_E0, pcov_E0 = curve_fit(func_E0, train_rs, E0_rs)
+    popt_t, pcov_t = curve_fit(func_t, train_rs, t_rs)
+    popt_U, pcov_U = curve_fit(func_U, train_rs, U_rs)
 
     print("E0 : d, r_0 ", popt_E0)
     print("t  : C, d, r_0 ", popt_t)
@@ -473,9 +537,9 @@ def mapping(
 
     norm_rs = {}
 
-    for r in rs:
+    for r in (train_rs + test_rs):
         ai_df = ai_df_rs[f'r{r}']
-        ai_var = np.var(ai_df)
+        ai_var = np.var(ai_df, axis=0)
         #print("Before clipping:\n", ai_var)
         des_var = ai_var.loc[ai_var.index != 'energy']
         des_var = np.clip(des_var, clip_val, np.max(des_var))  # clip so that small variances are set to 1
@@ -493,7 +557,7 @@ def mapping(
         optimize_CV_para_function,
         x0,
         args=(
-            rs,
+            train_rs,
             keys,
             weights,
             onebody,
@@ -520,7 +584,7 @@ def mapping(
 
     print("Evaluate train data after optimization:")
     data = evaluate_loss_CV_para_function(xmin.x,
-                                     rs,
+                                     train_rs,
                                      keys,
                                      weights,
                                      onebody,
@@ -534,26 +598,56 @@ def mapping(
                                      train_states_rs,
                                      test_states_rs)
 
+    E0_test_rs = []
+    t_test_rs = []
+    U_test_rs = []
+    for r in (test_rs):
+        ai_df = ai_df_rs[f'r{r}']
+        dmd = sm.OLS(ai_df["energy"], ai_df[onebody_params + twobody_params]).fit()
+        #print(dmd.summary())
+        params = dmd.params.copy()
+        params['E0'] = ( ai_df["energy"][0] - (params['t']*ai_df["t"][0] + params['U']*ai_df["U"][0]) )/4 
+        #print("New E0: ", params['E0'])
+        E0_test_rs.append(params['E0'])
+        t_test_rs.append(params['t'])
+        U_test_rs.append(params['U'])
+
+    data_test = evaluate_loss_para_function(xmin.x,
+                                     test_rs,
+                                     keys,
+                                     weights,
+                                     onebody,
+                                     twobody,
+                                     ai_df_rs,
+                                     max_ai_energy_rs,
+                                     nroots,
+                                     matches,
+                                     None,
+                                     norm_rs)
+
     with h5py.File(outfile, "w") as f:
-        f["rs"] = rs
+        f["train_rs"] = train_rs
+        f["test_rs"] = test_rs
         f["para_w_0"] = weights[0]
         f["para_w_1"] = weights[1]
         f["loss"] = xmin.fun
         f["function parameters, E0, t, U"] = xmin.x
         f["Mean over r Spectrum RMSE (Ha) - Train"] = data["Mean over r Spectrum RMSE (Ha) - Train"]
         f["Mean over r Spectrum RMSE (Ha) - Validation"] = data["Mean over r Spectrum RMSE (Ha) - Validation"]
+        f["Mean over r Spectrum RMSE (Ha) - Test"] = data_test["Mean over r Spectrum RMSE (Ha)"]
 
         mlflow.log_metrics({
             "loss": xmin.fun,
             "mean_over_r_spectrum_rmse_ha_train": data["Mean over r Spectrum RMSE (Ha) - Train"],
             "mean_over_r_spectrum_rmse_ha_val": data["Mean over r Spectrum RMSE (Ha) - Validation"],
+            "mean_over_r_spectrum_rmse_ha_test": data_test["Mean over r Spectrum RMSE (Ha)"],
             "sum-loss": data["sum_loss"],
             "para_w_0": weights[0],
             "para_w_1": weights[1],
         })
 
 
-        for i, r in enumerate(rs):
+        for i, r in enumerate(train_rs):
             data_r = data[f"r{r}"]
 
             for k in onebody_params + twobody_params:
@@ -576,8 +670,32 @@ def mapping(
                     for kk in data_r[k]:
                         f[f"r{r}/" + "train/" + k + "/" + kk] = data_r[k][kk]
                 elif k == "params":
-                    for i, kk in enumerate(onebody_params + twobody_params):
-                        f[f"r{r}/" + "rdmd_params/" + kk] = data_r[k][i]
+                    for kk in onebody_params + twobody_params:
+                        f[f"r{r}/" + "rdmd_params/" + kk] = data_r[k][kk]
+                else:
+                    f[f"r{r}/" + k] = data_r[k]
+
+        for i, r in enumerate(test_rs):
+            data_r = data_test[f"r{r}"]
+
+            for k in onebody_params + twobody_params:
+                if k == 'E0':
+                    f[f"r{r}/" + "dmd_params/" + k] = E0_test_rs[i]
+                if k == 't':
+                    f[f"r{r}/" + "dmd_params/" + k] = t_test_rs[i]
+                if k == 'U':
+                    f[f"r{r}/" + "dmd_params/" + k] = U_test_rs[i]
+
+            ai_df = ai_df_rs[f"r{r}"]
+            f[f"r{r}/" + "ai_spectrum_range (Ha)"] = np.max(ai_df["energy"]) - np.min(ai_df["energy"])
+
+            for k in data_r:
+                if k == "descriptors":
+                    for kk in data_r[k]:
+                        f[f"r{r}/" + "test/" + k + "/" + kk] = data_r[k][kk]
+                elif k == "params":
+                    for kk in onebody_params + twobody_params:
+                        f[f"r{r}/" + "rdmd_params/" + kk] = data_r[k][kk]
                 else:
                     f[f"r{r}/" + k] = data_r[k]
 

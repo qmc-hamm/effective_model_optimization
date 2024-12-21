@@ -19,12 +19,12 @@ parameter_sets = [
     # (['E0', 't','tdiag'], ['U', 'V','J']),
 ]
 rs_set = [
-    # [2.2, 2.8, 3.2, 3.6, 4.0, 4.4, 4.8, 5.0, 6.0, 7.0]
-    [2.2, 2.8, 3.2, 3.6, 4.0, 4.4]  # Test Workflow
+    [2.2, 2.8, 3.2, 3.6, 4.0, 4.4, 4.8, 5.0, 6.0, 7.0]
+    #[2.2, 2.8, 3.2, 3.6, 4.0, 4.4]  # Test Workflow
 ]
 state_cutoffs = [
-    10,  # Test Workflow
-    6, 8, 10, 12, 14
+    #10  # Test Workflow
+    8, 10, 12, 14
 ]
 w0s = [
     # 1.0, 0.95, 0.9, 0.85, 0.8
@@ -35,7 +35,7 @@ w0s = [
 
 def prepare_mlflow_params(
         state_cutoff: Optional[float] = None,
-        rs: Optional[List[float]] = None,
+        train_rs: Optional[List[float]] = None,
         w0: Optional[float] = None,
         parameter0: Optional[List[str]] = None,
         parameter1: Optional[List[str]] = None,
@@ -49,7 +49,7 @@ def prepare_mlflow_params(
 
     Args:
         state_cutoff: Cutoff state value
-        rs: Comma-separated string of values
+        train_rs: Comma-separated string of values
         w0: Initial weight value
         parameter0: First parameter string
         parameter1: Second parameter string
@@ -67,8 +67,8 @@ def prepare_mlflow_params(
 
     if state_cutoff is not None:
         params["state_cutoff"] = str(state_cutoff)
-    if rs is not None:
-        params["rs"] = ",".join([str(r) for r in rs])
+    if train_rs is not None:
+        params["train_rs"] = ",".join([str(r) for r in train_rs])
     if w0 is not None:
         params["w0"] = str(w0)
     if parameter0 is not None:
@@ -138,14 +138,14 @@ with mlflow.start_run(run_id=provided_run_id) as run:
     jobs = []
 
     # Hyperparameter sweep step
-    for parameters, rs, state_cutoff, w0 in itertools.product(parameter_sets,
+    for parameters, train_rs, state_cutoff, w0 in itertools.product(parameter_sets,
                                                               rs_set,
                                                               state_cutoffs,
                                                               w0s):
         job_params = prepare_mlflow_params(
             parameter0=parameters[0],
             parameter1=parameters[1],
-            rs=rs,
+            train_rs=train_rs,
             state_cutoff=state_cutoff,
             w0=w0
         )

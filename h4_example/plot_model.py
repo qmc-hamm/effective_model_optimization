@@ -17,14 +17,24 @@ def gather_data_to_plot(dirname, fname, parameters):
     data = []
 
     with h5py.File(os.path.join(dirname, fname), 'r') as f:
-        rs = f['train_rs'][()]
+        train_rs = f['train_rs'][()]
+        test_rs = f['test_rs'][()]
 
-        for r in rs:
+        all_rs = list(train_rs)+list(test_rs)
+        all_rs.sort()
+
+        for r in all_rs:
             data_r = {}
             data_r['r (Bohr)'] = r
 
-            data_r['Spectrum RMSE Train (Ha)'] = f[f'r{r}/Spectrum RMSE Train (Ha)'][()]
-            data_r['Spectrum RMSE Val (Ha)'] = f[f'r{r}/Spectrum RMSE Val (Ha)'][()]
+            if r in train_rs:
+                data_r['Spectrum RMSE Train (Ha)'] = f[f'r{r}/Spectrum RMSE Train (Ha)'][()]
+                data_r['Spectrum RMSE Val (Ha)'] = f[f'r{r}/Spectrum RMSE Val (Ha)'][()]
+                data_r['Spectrum RMSE Test (Ha)'] = None
+            elif r in test_rs:
+                data_r['Spectrum RMSE Train (Ha)'] = None
+                data_r['Spectrum RMSE Val (Ha)'] = None
+                data_r['Spectrum RMSE Test (Ha)'] = f[f'r{r}/Spectrum RMSE (Ha)'][()]
 
             for parameter in parameters:
                 data_r[f'RDMD {parameter} (Ha)'] = f[f'r{r}/rdmd_params/{parameter}'][()]
@@ -41,6 +51,8 @@ def plot_model(dirname: str, fname: str, parameters: tuple[list[str], list[str]]
     plot_file = f'{dirname}/Spectrum_RMSEvs_r.png'
     sns.lineplot(data=df, x='r (Bohr)', y='Spectrum RMSE Train (Ha)', label="Train")
     sns.lineplot(data=df, x='r (Bohr)', y='Spectrum RMSE Val (Ha)', label="Validation")
+    sns.lineplot(data=df, x='r (Bohr)', y='Spectrum RMSE Test (Ha)', label="Test")
+    plt.ylabel("Spectrum RMSE (Ha)")
     plt.legend()
     plt.savefig(plot_file)
     plt.clf()

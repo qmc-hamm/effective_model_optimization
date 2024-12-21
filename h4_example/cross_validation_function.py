@@ -47,7 +47,7 @@ def runCV(named_terms,
             twobody_keys.append(k)
 
     ai_df_rs = {}
-    for r in train_rs:
+    for r in all_rs:
         ai_df = pd.read_csv(ai_dir + f"r{r}.csv")
         ai_df = ai_df[ai_df.E0 > minimum_1s_occupation]
         ai_df = ai_df[ai_df.U < 1.3]  # Need to remove the top two states from the optimization

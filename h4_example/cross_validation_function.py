@@ -78,7 +78,7 @@ def runCV(named_terms,
         guess_params,
         niter_opt = niter_opt,
         tol_opt = tol_opt,
-        maxfev_opt = 1, # little optimization set to test workflow,
+        maxfev_opt = maxfev_opt,
     )
 
 
@@ -92,6 +92,7 @@ def main(parameters, state_cutoff, w0, train_rs, niter_opt, tol_opt, maxfev_opt,
         with mlflow.start_run():
             # Write model and plots to temp dir
             with tempfile.TemporaryDirectory() as output_dir:
+                model_files = []
                 for i in range(nCV_iter):
                     pname = make_name(parameters)
                     dirname = os.path.join(output_dir,f"func_model_data_{state_cutoff}_{w0}")
@@ -115,7 +116,8 @@ def main(parameters, state_cutoff, w0, train_rs, niter_opt, tol_opt, maxfev_opt,
                           tol_opt=tol_opt,
                           maxfev_opt=maxfev_opt
                           )
-                    plot_model(output_dir, model_file_path, parameters) # Artifacts the plots to mlflow inside function
+                    model_files.append(model_file_path)
+                plot_model(output_dir, model_files, parameters) # Artifacts the plots to mlflow inside function
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

@@ -13,40 +13,49 @@ def make_name(parameters):
     return "_".join(parameters[0]) + "_" + "_".join(parameters[1])
 
 
-def gather_data_to_plot(dirname, fname, parameters):
+def gather_data_to_plot(dirname, fnames, parameters):
     data = []
 
-    with h5py.File(os.path.join(dirname, fname), 'r') as f:
-        train_rs = f['train_rs'][()]
-        test_rs = f['test_rs'][()]
+    for i, fname in enumerate(fnames):
+        with h5py.File(os.path.join(dirname, fname), 'r') as f:
+            train_rs = f['train_rs'][()]
+            test_rs = f['test_rs'][()]
 
-        all_rs = list(train_rs)+list(test_rs)
-        all_rs.sort()
+            all_rs = list(train_rs)+list(test_rs)
+            all_rs.sort()
 
-        for r in all_rs:
-            data_r = {}
-            data_r['r (Bohr)'] = r
+            for r in all_rs:
+                data_r = {}
+                data_r['r (Bohr)'] = r
 
-            if r in train_rs:
-                data_r['Spectrum RMSE Train (Ha)'] = f[f'r{r}/Spectrum RMSE Train (Ha)'][()]
-                data_r['Spectrum RMSE Val (Ha)'] = f[f'r{r}/Spectrum RMSE Val (Ha)'][()]
-                data_r['Spectrum RMSE Test (Ha)'] = None
-            elif r in test_rs:
-                data_r['Spectrum RMSE Train (Ha)'] = None
-                data_r['Spectrum RMSE Val (Ha)'] = None
-                data_r['Spectrum RMSE Test (Ha)'] = f[f'r{r}/Spectrum RMSE (Ha)'][()]
+                data_r['CV iteration'] = i
 
-            for parameter in parameters:
-                data_r[f'RDMD {parameter} (Ha)'] = f[f'r{r}/rdmd_params/{parameter}'][()]
-                data_r[f'DMD {parameter} (Ha)'] = f[f'r{r}/dmd_params/{parameter}'][()]
+                data_r['loss'] = f['loss'][()]
 
-            data.append(data_r)
+                if r in train_rs:
+                    data_r['Spectrum RMSE Train (Ha)'] = f[f'r{r}/Spectrum RMSE Train (Ha)'][()]
+                    data_r['Spectrum RMSE Val (Ha)'] = f[f'r{r}/Spectrum RMSE Val (Ha)'][()]
+                    data_r['Spectrum RMSE Test (Ha)'] = None
+                elif r in test_rs:
+                    data_r['Spectrum RMSE Train (Ha)'] = None
+                    data_r['Spectrum RMSE Val (Ha)'] = None
+                    data_r['Spectrum RMSE Test (Ha)'] = f[f'r{r}/Spectrum RMSE (Ha)'][()]
+
+                for parameter in parameters:
+                    data_r[f'RDMD {parameter} (Ha)'] = f[f'r{r}/rdmd_params/{parameter}'][()]
+                    data_r[f'DMD {parameter} (Ha)'] = f[f'r{r}/dmd_params/{parameter}'][()]
+
+                data.append(data_r)
 
     return pd.DataFrame(data)
 
 
-def plot_model(dirname: str, fname: str, parameters: tuple[list[str], list[str]]) -> str:
-    df = gather_data_to_plot(dirname, fname, parameters[0]+parameters[1])
+def plot_model(dirname: str, fnames: list[str], parameters: tuple[list[str], list[str]]) -> str:
+    df = gather_data_to_plot(dirname, fnames, parameters[0]+parameters[1])
+    
+    csv_file = f'{dirname}/Processed_CV_data.csv'
+    df.to_csv(csv_file)
+    mlflow.log_artifact(csv_file)
 
     plot_file = f'{dirname}/Spectrum_RMSEvs_r.png'
     sns.lineplot(data=df, x='r (Bohr)', y='Spectrum RMSE Train (Ha)', label="Train")
@@ -54,7 +63,7 @@ def plot_model(dirname: str, fname: str, parameters: tuple[list[str], list[str]]
     sns.lineplot(data=df, x='r (Bohr)', y='Spectrum RMSE Test (Ha)', label="Test")
     plt.ylabel("Spectrum RMSE (Ha)")
     plt.legend()
-    plt.savefig(plot_file)
+    plt.savefig(plot_file, dpi=200)
     plt.clf()
 
     mlflow.log_artifact(plot_file)
@@ -63,7 +72,7 @@ def plot_model(dirname: str, fname: str, parameters: tuple[list[str], list[str]]
         plot_file2 = f'{dirname}/RDMD_{parameter}vs_r.png'
         sns.lineplot(data=df, x='r (Bohr)', y=f'RDMD {parameter} (Ha)', label="RDMD")
         sns.lineplot(data=df, x='r (Bohr)', y=f'DMD {parameter} (Ha)', label="DMD")
-        plt.savefig(plot_file2)
+        plt.savefig(plot_file2, dpi=200)
         plt.clf()
 
         mlflow.log_artifact(plot_file2)
@@ -79,7 +88,9 @@ if __name__ == "__main__":
     pname = make_name(parameters)
     i = 0
 
-    plot_model(".", f"func_model_data_{state_cutoff}_{w0}/{pname}_{i}.hdf5",
+    files = [f"func_model_data_{state_cutoff}_{w0}/{pname}_{i}.hdf5"]
+
+    plot_model(".", files,
                (['E0', 't'], ['U']) )
 
     

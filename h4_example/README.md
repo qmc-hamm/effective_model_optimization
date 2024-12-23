@@ -101,7 +101,7 @@ export MLFLOW_TRACKING_URI=https://<<MLFlow Tracking Server>>
 ```
 3. **Execute Main Entry Point Locally**: This is for specifying particular parameters for a single model run.
    ```bash
-   mlflow run . -P state_cutoff=10 -P rs="2.2,2.8" -P w0=0.9 --experiment-id 4
+   mlflow run . -P state_cutoff=10 -P train_rs="2.2,2.8" -P w0=0.9 --experiment-id 4
    ```
 4. **Execute Scan Entry Point Locally**: First edit the `scan.py` file to specify the parameter space to scan. Then run the scan entry point.
    ```bash

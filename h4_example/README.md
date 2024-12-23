@@ -124,7 +124,7 @@ mlflow run --entry-point scan -P training_backend=slurm \
 - Adjust parameters as needed for your specific use case.
 - Ensure that all dependencies are correctly specified in the environment files for seamless execution.
 - For distributed training using slurm, ensure that the configuration file is properly set up and referenced in the command.
-- Include experiment-id to orginize runs into the related MLFlow Experiment. Otherwise runs with be directed towards the Default Experiment.
+- Include experiment-id to organize runs into the related MLFlow Experiment. Otherwise runs with be directed towards the Default Experiment.
 
 This README provides an overview of how to use MLflow with this project for effective 
 model optimization and uncertainty analysis. Adjust configurations as necessary to 

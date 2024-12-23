@@ -45,6 +45,12 @@ The main entry point runs a single cross-validation training step.
       --parameters {parameter0} {parameter1}
   ```
 
+#### Running a Single Training Step on Campus Cluster
+You can use the `main` entrypoint to run a single training step on a campus cluster. To do this,
+you simply need to add `--backend slurm` and `--backend-config cpu-slurm.json` to the command. 
+This will run the training step as a batch job on the cluster.
+
+
 ### Scan
 
 The scan entry point runs a parameter space scan, launching multiple 

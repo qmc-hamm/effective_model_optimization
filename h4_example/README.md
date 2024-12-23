@@ -23,7 +23,7 @@ The main entry point runs a single cross-validation training step.
 
 - **Parameters**:
   - `state_cutoff`: (float) Default is 10.
-  - `rs`: (str) Default is "2.2, 2.8, 3.2, 3.6, 4.0, 4.4".
+  - `train_rs`: (str) Default is "2.2, 2.8, 3.2, 3.6, 4.0, 4.4".
   - `w0`: (float) Default is 0.9.
   - `parameter0`: (string) Default is "E0,t".
   - `parameter1`: (string) Default is "U".
@@ -33,7 +33,7 @@ The main entry point runs a single cross-validation training step.
     - `maxfev_opt`: (float) Default is 1.
     - `nCV_iter`: (float) Default is 1.
 
-- **Command**:
+- **Commands**:
   ```bash
   python cross_validation_function.py \
       --state_cutoff {state_cutoff} \
@@ -44,12 +44,23 @@ The main entry point runs a single cross-validation training step.
       --maxfev_opt {maxfev_opt} \
       --parameters {parameter0} {parameter1}
   ```
+  ```bash
+  mlflow run . --entry-point main  --experiment-id 4 --backend=local
+  ```
 
 #### Running a Single Training Step on Campus Cluster
 You can use the `main` entrypoint to run a single training step on a campus cluster. To do this,
 you simply need to add `--backend slurm` and `--backend-config cpu-slurm.json` to the command. 
 This will run the training step as a batch job on the cluster.
 
+- **Parameters**:
+  - `backend`: (str) Default is "local". Options are "local" or "slurm".
+  - `backend_config`: (str) Configuration file for slurm jobs if applicable.
+
+- **Command**
+  ```bash
+  mlflow run . --entry-point main  --experiment-id 4 --backend=slurm --backend-config=cpu-slurm.json
+  ```
 
 ### Scan
 
@@ -88,13 +99,13 @@ pip install mlflow-skinny
 ```bash
 export MLFLOW_TRACKING_URI=https://<<MLFlow Tracking Server>>
 ```
-3. **Execute Main Entry Point**: This is for specifying particylar parameters for a single model run.
+3. **Execute Main Entry Point Locally**: This is for specifying particular parameters for a single model run.
    ```bash
-   mlflow run . -P state_cutoff=10 -P rs="2.2,2.8" -P w0=0.9
+   mlflow run . -P state_cutoff=10 -P rs="2.2,2.8" -P w0=0.9 --experiment-id 4
    ```
-4. **Execute Scan Entry Point**: First edit the `scan.py` file to specify the parameter space to scan. Then run the scan entry point.
+4. **Execute Scan Entry Point Locally**: First edit the `scan.py` file to specify the parameter space to scan. Then run the scan entry point.
    ```bash
-   mlflow run . -e scan -P training_backend=local
+   mlflow run . -e scan -P training_backend=local --experiment-id 4
    ```
 
 ## Running a Scan on Campus Cluster
@@ -113,6 +124,7 @@ mlflow run --entry-point scan -P training_backend=slurm \
 - Adjust parameters as needed for your specific use case.
 - Ensure that all dependencies are correctly specified in the environment files for seamless execution.
 - For distributed training using slurm, ensure that the configuration file is properly set up and referenced in the command.
+- Include experiment-id to orginize runs into the related MLFlow Experiment. Otherwise runs with be directed towards the Default Experiment.
 
 This README provides an overview of how to use MLflow with this project for effective 
 model optimization and uncertainty analysis. Adjust configurations as necessary to 

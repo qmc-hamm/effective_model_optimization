@@ -10,21 +10,33 @@ import solver
 cache = {}  # For speedup during mulitiple ED during model optimization
 
 # Parameter functions
+def exponential(rs, d, r_0): # 2 parameters
+    x = np.exp(-d * (rs - r_0)) - 0.5  # exponential
+    return x
 
+def sigmoid(rs, C, d, r_0): # 3 parameters
+    x = (C / (1 + np.exp(-d * (rs - r_0)))) - C 
+    return x
+
+def ploynomial3(rs, a, b, c, d):  # 4 parameters
+    x = a + b*rs + c*rs**2 + d*rs**3  # 3 degree polynomial
+    return x
+
+def ploynomial4(rs, a, b, c, d, e):  # 5 parameters
+    x = a + b*rs + c*rs**2 + d*rs**3 + e*rs**4  # 4 degree polynomial
+    return x
 
 def func_E0(rs, d, r_0):  # 2 parameters
     x = np.exp(-d * (rs - r_0)) - 0.5  # exponential
     return x
-
 
 def func_t(rs, C, d, r_0):  # 3 parameters
     # C is carrying capacity, i.e. min(t)
     x = (C / (1 + np.exp(-d * (rs - r_0)))) - C  # sigmoid, logistic
     return x
 
-
-def func_U(rs, a, b, c, d):  # 4 parameters
-    x = a * rs**3 + b * rs**2 + c * rs + d  # 3 degree polynomial
+def func_U(rs, a, r_0, c):  # 2 parameters
+    x = -a*1*(rs - r_0)**-1 + c  # 1/r function
     return x
 
 
@@ -224,6 +236,7 @@ def evaluate_loss(
 
 def evaluate_loss_para_function(
     x0,
+    x0_ind,
     rs,
     keys,
     weights,
@@ -247,9 +260,9 @@ def evaluate_loss_para_function(
 
         #print(r)
 
-        E0 = func_E0(r, x0[0], x0[1])
-        t = func_t(r, x0[2], x0[3], x0[4])
-        U = func_U(r, x0[5], x0[6], x0[7], x0[8])
+        E0 = func_E0(r, x0[x0_ind[0]][0], x0[x0_ind[0]][1])
+        t = func_t(r, x0[x0_ind[1]][0], x0[x0_ind[1]][1], x0[x0_ind[1]][2])
+        U = func_U(r, x0[x0_ind[2]][0], x0[x0_ind[2]][1], x0[x0_ind[2]][2])
 
         params = [E0, t, U]
 
@@ -392,6 +405,7 @@ def optimize_CV_function(*args, **kwargs):
 
 def evaluate_loss_CV_para_function(
     x0,
+    x0_ind,
     rs,
     keys,
     weights,
@@ -418,9 +432,9 @@ def evaluate_loss_CV_para_function(
 
         #print(r)
 
-        E0 = func_E0(r, x0[0], x0[1])
-        t = func_t(r, x0[2], x0[3], x0[4])
-        U = func_U(r, x0[5], x0[6], x0[7], x0[8])
+        E0 = func_E0(r, x0[x0_ind[0]][0], x0[x0_ind[0]][1])
+        t = func_t(r, x0[x0_ind[1]][0], x0[x0_ind[1]][1], x0[x0_ind[1]][2])
+        U = func_U(r, x0[x0_ind[2]][0], x0[x0_ind[2]][1], x0[x0_ind[2]][2])
 
         params = [E0, t, U]
 
@@ -526,14 +540,16 @@ def mapping(
     print("U", U_rs)
 
     print("Parameter function initial variables (E0, t, U):")
-
+    # Set up guess functions -------
     popt_E0, pcov_E0 = curve_fit(func_E0, train_rs, E0_rs)
     popt_t, pcov_t = curve_fit(func_t, train_rs, t_rs)
-    popt_U, pcov_U = curve_fit(func_U, train_rs, U_rs)
+    popt_U, pcov_U = curve_fit(func_U, train_rs, U_rs) # Probably rewrite using dictionaries
 
     print("E0 : d, r_0 ", popt_E0)
     print("t  : C, d, r_0 ", popt_t)
-    print("U : a, b, c, d ", popt_U)
+    print("U : a, r_0, c", popt_U) 
+    x0_ind = [[0, 1], [2, 3, 4], [5, 6, 7]]
+    x0 = np.concatenate((popt_E0, popt_t, popt_U))
 
     norm_rs = {}
 
@@ -548,7 +564,6 @@ def mapping(
         norm_rs[f'r{r}'] = 2 * ai_var
 
     keys = params.keys()
-    x0 = np.concatenate((popt_E0, popt_t, popt_U))
 
     # OPTMIZATION LOOP START
     print("Starting optimization")
@@ -557,6 +572,7 @@ def mapping(
         optimize_CV_para_function,
         x0,
         args=(
+            x0_ind,
             train_rs,
             keys,
             weights,
@@ -584,6 +600,7 @@ def mapping(
 
     print("Evaluate train data after optimization:")
     data = evaluate_loss_CV_para_function(xmin.x,
+                                     x0_ind,
                                      train_rs,
                                      keys,
                                      weights,
@@ -613,6 +630,7 @@ def mapping(
         U_test_rs.append(params['U'])
 
     data_test = evaluate_loss_para_function(xmin.x,
+                                     x0_ind,
                                      test_rs,
                                      keys,
                                      weights,

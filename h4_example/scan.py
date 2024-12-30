@@ -50,6 +50,8 @@ def prepare_mlflow_params(
         tol_opt: Optional[float] = None,
         maxfev_opt: Optional[float] = None,
         nCV_iter: Optional[float] = None,
+        parameter_function0: Optional[List[str]] = None,
+        parameter_function1: Optional[List[str]] = None,
 ) -> Dict[str, Union[str, bool]]:
     """
     Prepare parameters for Cross Validation training run.
@@ -64,6 +66,8 @@ def prepare_mlflow_params(
         tol_opt: Optimization tolerance
         maxfev_opt: Maximum function evaluations
         nCV_iter: Number of cross-validation iterations
+        parameter_function0: First parameter function name string
+        parameter_function1: Second parameter function name string
 
     Returns:
         Dictionary with MLflow run configuration parameters. The dict will
@@ -82,6 +86,10 @@ def prepare_mlflow_params(
         params["parameter0"] = ",".join(parameter0)
     if parameter1 is not None:
         params["parameter1"] = ",".join(parameter1)
+    if parameter_function0 is not None:
+        params["parameter_function0"] = ",".join(parameter_function0)
+    if parameter_function1 is not None:
+        params["parameter_function1"] = ",".join(parameter_function1)
     if niter_opt is not None:
         params["niter_opt"] = str(niter_opt)
     if tol_opt is not None:
@@ -145,13 +153,23 @@ with mlflow.start_run(run_id=provided_run_id) as run:
     jobs = []
 
     # Hyperparameter sweep step
-    for parameters, train_rs, state_cutoff, w0 in itertools.product(parameter_sets,
+    for parameters, parameter_function_dict, train_rs, state_cutoff, w0 in itertools.product(parameter_sets,
+                                                              param_function_sets,
                                                               rs_set,
                                                               state_cutoffs,
                                                               w0s):
+        
+        param_functions = [[],[]]
+        for param in parameters[0]:
+            param_functions[0].append(parameter_function_dict[param])
+        for param in parameters[1]:
+            param_functions[1].append(parameter_function_dict[param])
+
         job_params = prepare_mlflow_params(
             parameter0=parameters[0],
             parameter1=parameters[1],
+            parameter_function0=param_functions[0],
+            parameter_function1=param_functions[1],
             train_rs=train_rs,
             state_cutoff=state_cutoff,
             w0=w0

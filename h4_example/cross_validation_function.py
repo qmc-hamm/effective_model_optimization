@@ -22,10 +22,11 @@ def runCV(named_terms,
           twobody_params,
           train_rs,
           test_rs,
+          param_functions,
           minimum_1s_occupation=3.7,
           w0=1,
           beta=0,
-          p=0,
+          p=1,
           guess_params=None,
           state_cutoff=None,
           niter_opt=1,
@@ -72,6 +73,7 @@ def runCV(named_terms,
         matches,
         train_rs,
         test_rs,
+        param_functions,
         weights,
         beta,
         p,
@@ -85,7 +87,7 @@ def runCV(named_terms,
 def make_name(parameters):
     return "_".join(parameters[0]) + "_" + "_".join(parameters[1])
 
-def main(parameters, state_cutoff, w0, train_rs, niter_opt, tol_opt, maxfev_opt, nCV_iter):
+def main(parameters, state_cutoff, w0, train_rs, niter_opt, tol_opt, maxfev_opt, nCV_iter, param_functions):
         test_rs = list( set(all_rs) - set(train_rs))#.sort()
         test_rs.sort()
         print("Test rs values:", test_rs)
@@ -108,6 +110,7 @@ def main(parameters, state_cutoff, w0, train_rs, niter_opt, tol_opt, maxfev_opt,
                           twobody_params=parameters[1],
                           train_rs=train_rs,
                           test_rs=test_rs,
+                          param_functions=param_functions,
                           w0=w0,
                           beta=0,
                           p=1,
@@ -129,6 +132,8 @@ if __name__ == "__main__":
     parser.add_argument("--tol_opt", type=float)
     parser.add_argument("--nCV_iter", type=int, default=1)
     parser.add_argument("--maxfev_opt", type=int, default=1)
+    parser.add_argument("--parameter_functions", type=str, nargs="+")
+    # param_functions = ["func_E0", "func_t", "func_U"]
     args = parser.parse_args()
     parameters = (args.parameters[0].split(','), args.parameters[1].split(','))
     state_cutoff = args.state_cutoff
@@ -138,5 +143,6 @@ if __name__ == "__main__":
     tol_opt = args.tol_opt
     nCV_iter = args.nCV_iter
     maxfev_opt = args.maxfev_opt
+    param_functions = args.parameter_functions[0].split(',') + args.parameter_functions[1].split(',')
 
-    main(parameters, state_cutoff, w0, train_rs, niter_opt, tol_opt, maxfev_opt, nCV_iter)
+    main(parameters, state_cutoff, w0, train_rs, niter_opt, tol_opt, maxfev_opt, nCV_iter, param_functions)

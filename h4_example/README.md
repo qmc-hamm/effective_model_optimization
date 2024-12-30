@@ -27,6 +27,8 @@ The main entry point runs a single cross-validation training step.
   - `w0`: (float) Default is 0.9.
   - `parameter0`: (string) Default is "E0,t".
   - `parameter1`: (string) Default is "U".
+  - `parameter_function0` : (string) Default is "func_E0,func_t".
+  - `parameter_function1` : (string) Default is "func_U".
   - Debugging parameters:
     - `niter_opt`: (float) Default is 1.
     - `tol_opt`: (float) Default is 1.
@@ -37,12 +39,13 @@ The main entry point runs a single cross-validation training step.
   ```bash
   python cross_validation_function.py \
       --state_cutoff {state_cutoff} \
-      --rs {rs} \
+      --train_rs {rs} \
       --w0 {w0} \
       --niter_opt {niter_opt} \
       --tol_opt {tol_opt} \
       --maxfev_opt {maxfev_opt} \
       --parameters {parameter0} {parameter1}
+      --parameter_functions {parameter_function0} {parameter_function1}
   ```
   ```bash
   mlflow run . --entry-point main  --experiment-id 4 --backend=local

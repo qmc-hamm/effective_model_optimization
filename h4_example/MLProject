@@ -15,6 +15,8 @@ entry_points:
         w0: {type: float, default: 0.9}
         parameter0: {type: string, default: "E0,t"}
         parameter1: {type: string, default: "U"}
+        parameter_function0: {type: string, default: "func_E0,func_t"}
+        parameter_function1: {type: string, default: "func_U"}
 
         # These parameters can be used to make quick training
         # runs for debugging purposes.
@@ -31,7 +33,8 @@ entry_points:
               --tol_opt {tol_opt} \
               --maxfev_opt {maxfev_opt} \
               --nCV_iter {nCV_iter} \
-              --parameters {parameter0} {parameter1}"
+              --parameters {parameter0} {parameter1} \
+              --parameter_functions {parameter_function0} {parameter_function1}"
   scan:
     # Run a scan over a parameter space. Launches multiple cross-validation
     # training steps in parallel using the MLFlow main entry point above.

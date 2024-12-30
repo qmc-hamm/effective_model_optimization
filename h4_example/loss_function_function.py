@@ -6,12 +6,14 @@ import numpy as np
 from rich import print
 from scipy.optimize import linear_sum_assignment, minimize, curve_fit
 import solver
+from inspect import signature
 
 cache = {}  # For speedup during mulitiple ED during model optimization
 
+
 # Parameter functions
-def exponential(rs, d, r_0): # 2 parameters
-    x = np.exp(-d * (rs - r_0)) - 0.5  # exponential
+def exponential(rs, d, r_0, c): # 3 parameters
+    x = np.exp(-d * (rs - r_0)) - c  # exponential
     return x
 
 def sigmoid(rs, C, d, r_0): # 3 parameters
@@ -26,6 +28,10 @@ def ploynomial4(rs, a, b, c, d, e):  # 5 parameters
     x = a + b*rs + c*rs**2 + d*rs**3 + e*rs**4  # 4 degree polynomial
     return x
 
+def ploynomial5(rs, a, b, c, d, e, f):  # 6 parameters
+    x = a + b*rs + c*rs**2 + d*rs**3 + e*rs**4 + f*rs**5 # 5 degree polynomial
+    return x
+
 def func_E0(rs, d, r_0):  # 2 parameters
     x = np.exp(-d * (rs - r_0)) - 0.5  # exponential
     return x
@@ -35,10 +41,111 @@ def func_t(rs, C, d, r_0):  # 3 parameters
     x = (C / (1 + np.exp(-d * (rs - r_0)))) - C  # sigmoid, logistic
     return x
 
-def func_U(rs, a, r_0, c):  # 2 parameters
-    x = -a*1*(rs - r_0)**-1 + c  # 1/r function
+def func_U(rs, a, r_0, c):  # 3 parameters
+    x = a*(rs - r_0)**-1 + c  # 1/r function
     return x
 
+def func_U_linear(rs, a, r_0, c, b, r_1):  # 5  parameters
+    x = a*(rs - r_0)**-1 + c + b*(rs - r_1) # 1/r function + linear function
+    return x
+
+def func_U_linear_fixed(rs, a, r_0, b, r_1):  # 4  parameters
+    x = a*(rs - r_0)**-1 + 0.50 + b*(rs - r_1)**-2 # 1/r function + linear function
+    return x
+
+def unpack_exponential(rs, params):
+    d = params[0]
+    r_0 = params[1]
+    c = params[2]
+    return  exponential(rs, d, r_0, c)
+
+def unpack_sigmoid(rs, params):
+    C = params[0]
+    d = params[1]
+    r_0 = params[2]
+    return sigmoid(rs, C, d, r_0)
+
+def unpack_ploynomial3(rs, params):
+    a = params[0]
+    b = params[1]
+    c = params[2]
+    d = params[3]
+    return ploynomial3(rs, a, b, c, d)
+
+def unpack_ploynomial4(rs, params):
+    a = params[0]
+    b = params[1]
+    c = params[2]
+    d = params[3]
+    e = params[4]
+    return ploynomial4(rs, a, b, c, d, e)
+
+def unpack_ploynomial5(rs, params):
+    a = params[0]
+    b = params[1]
+    c = params[2]
+    d = params[3]
+    e = params[4]
+    f = params[5]
+    return ploynomial5(rs, a, b, c, d, e, f)
+
+def unpack_func_E0(rs, params):
+    d = params[0]
+    r_0 = params[1]
+    return func_E0(rs, d, r_0)
+
+def unpack_func_t(rs, params):
+    C = params[0]
+    d = params[1]
+    r_0 = params[2]
+    return func_t(rs, C, d, r_0)
+
+def unpack_func_U(rs, params):
+    a = params[0]
+    r_0 = params[1]
+    c = params[2]
+    return func_U(rs, a, r_0, c)
+
+def unpack_func_U_linear(rs, params):
+    a = params[0]
+    r_0 = params[1]
+    c = params[2]
+    b = params[3]
+    r_1 = params[4]
+    return func_U_linear(rs, a, r_0, c, b, r_1)
+
+def unpack_func_U_linear_fixed(rs, params):
+    a = params[0]
+    r_0 = params[1]
+    b = params[2]
+    r_1 = params[3]
+    return func_U_linear_fixed(rs, a, r_0, b, r_1)
+
+function_dict = {
+    'func_E0' : func_E0,
+    'func_t' : func_t,
+    'func_U' : func_U,
+    'func_U_linear' : func_U_linear,
+    'func_U_linear_fixed' : func_U_linear_fixed,
+    'exponential' : exponential,
+    'sigmoid' : sigmoid,
+    'ploynomial3' : ploynomial3,
+    'ploynomial4' : ploynomial4,
+    'ploynomial5' : ploynomial5,
+}
+
+unpack_func_dict = {
+    'func_E0' : unpack_func_E0,
+    'func_t' : unpack_func_t,
+    'func_U' : unpack_func_U,
+    'func_U_linear' : unpack_func_U_linear,
+    'func_U_linear_fixed' : unpack_func_U_linear_fixed,
+    'exponential' : unpack_exponential,
+    'sigmoid' : unpack_sigmoid,
+    'ploynomial3' : unpack_ploynomial3,
+    'ploynomial4' : unpack_ploynomial4,
+    'ploynomial5' : unpack_ploynomial5,
+}
 
 def descriptor_distance(
     ai_df: pd.DataFrame, model_descriptors: dict, matches: list[str], norm
@@ -237,6 +344,7 @@ def evaluate_loss(
 def evaluate_loss_para_function(
     x0,
     x0_ind,
+    param_functions,
     rs,
     keys,
     weights,
@@ -250,7 +358,7 @@ def evaluate_loss_para_function(
     norm_rs,
 ):
 
-    print(keys) # E0, t, U
+    #print(keys) # E0, t, U
 
     losses = {}
     sum_loss = 0
@@ -260,11 +368,9 @@ def evaluate_loss_para_function(
 
         #print(r)
 
-        E0 = func_E0(r, x0[x0_ind[0]][0], x0[x0_ind[0]][1])
-        t = func_t(r, x0[x0_ind[1]][0], x0[x0_ind[1]][1], x0[x0_ind[1]][2])
-        U = func_U(r, x0[x0_ind[2]][0], x0[x0_ind[2]][1], x0[x0_ind[2]][2])
-
-        params = [E0, t, U]
+        params = []
+        for j, param in enumerate(keys):
+            params.append(unpack_func_dict[param_functions[j]](r , x0[x0_ind[j] : x0_ind[j+1]]))
 
         losses[f'r{r}'] = evaluate_loss(params,
                                            keys,
@@ -285,8 +391,8 @@ def evaluate_loss_para_function(
     mean_over_r_spectrum_rmse_ha = np.mean(sum_spec_rmse)
     losses["Mean over r Spectrum RMSE (Ha)"] = mean_over_r_spectrum_rmse_ha
 
-    print(x0)
-    print(sum_loss)
+    #print(x0)
+    #print(sum_loss)
 
     return losses
 
@@ -406,6 +512,7 @@ def optimize_CV_function(*args, **kwargs):
 def evaluate_loss_CV_para_function(
     x0,
     x0_ind,
+    param_functions,
     rs,
     keys,
     weights,
@@ -421,7 +528,7 @@ def evaluate_loss_CV_para_function(
     test_states_rs,
 ):
 
-    print(keys) # E0, t, U
+    #print(keys) # E0, t, U
 
     losses = {}
     sum_loss = 0
@@ -431,12 +538,9 @@ def evaluate_loss_CV_para_function(
     for r in rs:
 
         #print(r)
-
-        E0 = func_E0(r, x0[x0_ind[0]][0], x0[x0_ind[0]][1])
-        t = func_t(r, x0[x0_ind[1]][0], x0[x0_ind[1]][1], x0[x0_ind[1]][2])
-        U = func_U(r, x0[x0_ind[2]][0], x0[x0_ind[2]][1], x0[x0_ind[2]][2])
-
-        params = [E0, t, U]
+        params = []
+        for j, param in enumerate(keys):
+            params.append(unpack_func_dict[param_functions[j]](r , x0[x0_ind[j] : x0_ind[j+1]]))
 
         losses[f'r{r}'] = CV_evaluate_loss(params,
                                            keys,
@@ -462,8 +566,8 @@ def evaluate_loss_CV_para_function(
     losses["Mean over r Spectrum RMSE (Ha) - Train"] = mean_over_r_spectrum_rmse_ha_train
     losses["Mean over r Spectrum RMSE (Ha) - Validation"] = mean_over_r_spectrum_rmse_ha_val
 
-    print(x0)
-    print(sum_loss)
+    #print(x0)
+    #print(sum_loss)
 
     return losses
 
@@ -483,6 +587,7 @@ def mapping(
     matches: list,
     train_rs: list,
     test_rs: list,
+    param_functions: list,
     weights: list,
     beta: float,
     p: int,
@@ -517,39 +622,42 @@ def mapping(
 
     # Starting parameter guess
 
-    #params_rs = []
-    # Can only use Hubbard model at the moment, TODO: generalize to parameters
-    E0_rs = []
-    t_rs = []
-    U_rs = []
+    dmd_train_rs_params = np.zeros((len(onebody_params + twobody_params), len(train_rs)))
+    print("dmd_train_rs_params shape: ", dmd_train_rs_params.shape)
+    E0_ind = onebody_params.index('E0')
 
-    for r in (train_rs):
+    for i, r in enumerate(train_rs):
         ai_df = ai_df_rs[f'r{r}']
         dmd = sm.OLS(ai_df["energy"], ai_df[onebody_params + twobody_params]).fit()
-        #print(dmd.summary())
-        params = dmd.params.copy()
-        params['E0'] = ( ai_df["energy"][0] - (params['t']*ai_df["t"][0] + params['U']*ai_df["U"][0]) )/4 
-        #print("New E0: ", params['E0'])
-        E0_rs.append(params['E0'])
-        t_rs.append(params['t'])
-        U_rs.append(params['U'])
+        fitted_ground_state_energy = 0
+        for j, param in enumerate(onebody_params + twobody_params):
+            if j == E0_ind:
+                continue
+            dmd_train_rs_params[j][i] = dmd.params[param]
+            fitted_ground_state_energy += dmd.params[param]*ai_df[param][0]
 
-    print("DMD parameters (E0, t, U):")
-    print("E0 ", E0_rs)
-    print("t ", t_rs)
-    print("U", U_rs)
+        dmd_train_rs_params[E0_ind][i] = ( ai_df["energy"][0] - fitted_ground_state_energy) / 4 # 4 is the number of sites ; make generic
 
-    print("Parameter function initial variables (E0, t, U):")
+    print("DMD parameters for train_rs: ", onebody_params + twobody_params)
+    print(dmd_train_rs_params)
+
+    print("Parameter function initial variables:")
+    x0 = []
+    x0_ind = [0]
     # Set up guess functions -------
-    popt_E0, pcov_E0 = curve_fit(func_E0, train_rs, E0_rs)
-    popt_t, pcov_t = curve_fit(func_t, train_rs, t_rs)
-    popt_U, pcov_U = curve_fit(func_U, train_rs, U_rs) # Probably rewrite using dictionaries
+    for j, param in enumerate(onebody_params + twobody_params):
+        try:
+            popt, pcov = curve_fit(function_dict[param_functions[j]], train_rs, dmd_train_rs_params[j])
+        except:
+            sig = signature(function_dict[param_functions[j]])
+            popt = np.zeros(len(sig.parameters) - 1)
+        print(f"{param} : {popt}")
+        x0.append(popt)
+        x0_ind.append( len(popt) + x0_ind[j])
+    
+    x0 = np.concatenate(x0)
 
-    print("E0 : d, r_0 ", popt_E0)
-    print("t  : C, d, r_0 ", popt_t)
-    print("U : a, r_0, c", popt_U) 
-    x0_ind = [[0, 1], [2, 3, 4], [5, 6, 7]]
-    x0 = np.concatenate((popt_E0, popt_t, popt_U))
+    print(x0, x0_ind)
 
     norm_rs = {}
 
@@ -563,7 +671,7 @@ def mapping(
         #print("After clipping:\n", ai_var)
         norm_rs[f'r{r}'] = 2 * ai_var
 
-    keys = params.keys()
+    keys = dmd.params.keys()
 
     # OPTMIZATION LOOP START
     print("Starting optimization")
@@ -573,6 +681,7 @@ def mapping(
         x0,
         args=(
             x0_ind,
+            param_functions,
             train_rs,
             keys,
             weights,
@@ -601,6 +710,7 @@ def mapping(
     print("Evaluate train data after optimization:")
     data = evaluate_loss_CV_para_function(xmin.x,
                                      x0_ind,
+                                     param_functions,
                                      train_rs,
                                      keys,
                                      weights,
@@ -615,22 +725,26 @@ def mapping(
                                      train_states_rs,
                                      test_states_rs)
 
-    E0_test_rs = []
-    t_test_rs = []
-    U_test_rs = []
-    for r in (test_rs):
+    dmd_test_rs_params = np.zeros((len(onebody_params + twobody_params), len(test_rs)))
+    print("dmd_test_rs_params shape: ", dmd_test_rs_params.shape)
+
+    for i, r in enumerate(test_rs):
         ai_df = ai_df_rs[f'r{r}']
         dmd = sm.OLS(ai_df["energy"], ai_df[onebody_params + twobody_params]).fit()
-        #print(dmd.summary())
-        params = dmd.params.copy()
-        params['E0'] = ( ai_df["energy"][0] - (params['t']*ai_df["t"][0] + params['U']*ai_df["U"][0]) )/4 
-        #print("New E0: ", params['E0'])
-        E0_test_rs.append(params['E0'])
-        t_test_rs.append(params['t'])
-        U_test_rs.append(params['U'])
+        fitted_ground_state_energy = 0
+        for j, param in enumerate(onebody_params + twobody_params):
+            if j == E0_ind:
+                continue
+            dmd_test_rs_params[j][i] = dmd.params[param]
+            fitted_ground_state_energy += dmd.params[param]*ai_df[param][0]
+
+        dmd_test_rs_params[E0_ind][i] = ( ai_df["energy"][0] - fitted_ground_state_energy) / 4 # 4 is the number of sites ; make generic
+
+    print(dmd_test_rs_params)
 
     data_test = evaluate_loss_para_function(xmin.x,
                                      x0_ind,
+                                     param_functions,
                                      test_rs,
                                      keys,
                                      weights,
@@ -649,10 +763,14 @@ def mapping(
         f["para_w_0"] = weights[0]
         f["para_w_1"] = weights[1]
         f["loss"] = xmin.fun
-        f["function parameters, E0, t, U"] = xmin.x
+        f["params"] = onebody_params + twobody_params
+        f["params functions"] = param_functions
+        f["params functions paramters"] = xmin.x
         f["Mean over r Spectrum RMSE (Ha) - Train"] = data["Mean over r Spectrum RMSE (Ha) - Train"]
         f["Mean over r Spectrum RMSE (Ha) - Validation"] = data["Mean over r Spectrum RMSE (Ha) - Validation"]
         f["Mean over r Spectrum RMSE (Ha) - Test"] = data_test["Mean over r Spectrum RMSE (Ha)"]
+        f["iterations"] = xmin.nit
+        f["termination_message"] = xmin.message
 
         mlflow.log_metrics({
             "loss": xmin.fun,
@@ -668,13 +786,8 @@ def mapping(
         for i, r in enumerate(train_rs):
             data_r = data[f"r{r}"]
 
-            for k in onebody_params + twobody_params:
-                if k == 'E0':
-                    f[f"r{r}/" + "dmd_params/" + k] = E0_rs[i]
-                if k == 't':
-                    f[f"r{r}/" + "dmd_params/" + k] = t_rs[i]
-                if k == 'U':
-                    f[f"r{r}/" + "dmd_params/" + k] = U_rs[i]
+            for j, k in enumerate(onebody_params + twobody_params):
+                f[f"r{r}/" + "dmd_params/" + k] = dmd_train_rs_params[j][i]
 
             ai_df = ai_df_rs[f"r{r}"]
             f[f"r{r}/" + "ai_spectrum_range (Ha)"] = np.max(ai_df["energy"]) - np.min(ai_df["energy"])
@@ -696,13 +809,8 @@ def mapping(
         for i, r in enumerate(test_rs):
             data_r = data_test[f"r{r}"]
 
-            for k in onebody_params + twobody_params:
-                if k == 'E0':
-                    f[f"r{r}/" + "dmd_params/" + k] = E0_test_rs[i]
-                if k == 't':
-                    f[f"r{r}/" + "dmd_params/" + k] = t_test_rs[i]
-                if k == 'U':
-                    f[f"r{r}/" + "dmd_params/" + k] = U_test_rs[i]
+            for j, k in enumerate(onebody_params + twobody_params):
+                f[f"r{r}/" + "dmd_params/" + k] = dmd_test_rs_params[j][i]
 
             ai_df = ai_df_rs[f"r{r}"]
             f[f"r{r}/" + "ai_spectrum_range (Ha)"] = np.max(ai_df["energy"]) - np.min(ai_df["energy"])
@@ -716,8 +824,5 @@ def mapping(
                         f[f"r{r}/" + "rdmd_params/" + kk] = data_r[k][kk]
                 else:
                     f[f"r{r}/" + k] = data_r[k]
-
-        f["iterations"] = xmin.nit
-        f["termination_message"] = xmin.message
 
     mlflow.log_artifact(outfile)

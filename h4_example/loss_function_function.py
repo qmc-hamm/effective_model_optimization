@@ -343,6 +343,7 @@ def evaluate_loss(
 def evaluate_loss_para_function(
     x0,
     x0_ind,
+    param_functions,
     rs,
     keys,
     weights,
@@ -366,11 +367,9 @@ def evaluate_loss_para_function(
 
         #print(r)
 
-        E0 = func_E0(r, x0[x0_ind[0]][0], x0[x0_ind[0]][1])
-        t = func_t(r, x0[x0_ind[1]][0], x0[x0_ind[1]][1], x0[x0_ind[1]][2])
-        U = func_U(r, x0[x0_ind[2]][0], x0[x0_ind[2]][1], x0[x0_ind[2]][2])
-
-        params = [E0, t, U]
+        params = []
+        for j, param in enumerate(keys):
+            params.append(unpack_func_dict[param_functions[j]](r , x0[x0_ind[j] : x0_ind[j+1]]))
 
         losses[f'r{r}'] = evaluate_loss(params,
                                            keys,
@@ -512,6 +511,7 @@ def optimize_CV_function(*args, **kwargs):
 def evaluate_loss_CV_para_function(
     x0,
     x0_ind,
+    param_functions,
     rs,
     keys,
     weights,
@@ -537,12 +537,9 @@ def evaluate_loss_CV_para_function(
     for r in rs:
 
         #print(r)
-
-        E0 = func_E0(r, x0[x0_ind[0]][0], x0[x0_ind[0]][1])
-        t = func_t(r, x0[x0_ind[1]][0], x0[x0_ind[1]][1], x0[x0_ind[1]][2])
-        U = func_U(r, x0[x0_ind[2]][0], x0[x0_ind[2]][1], x0[x0_ind[2]][2])
-
-        params = [E0, t, U]
+        params = []
+        for j, param in enumerate(keys):
+            params.append(unpack_func_dict[param_functions[j]](r , x0[x0_ind[j] : x0_ind[j+1]]))
 
         losses[f'r{r}'] = CV_evaluate_loss(params,
                                            keys,
@@ -589,6 +586,7 @@ def mapping(
     matches: list,
     train_rs: list,
     test_rs: list,
+    param_functions: list,
     weights: list,
     beta: float,
     p: int,
@@ -623,29 +621,28 @@ def mapping(
 
     # Starting parameter guess
 
-    #params_rs = []
-    # Can only use Hubbard model at the moment, TODO: generalize to parameters
-    E0_rs = []
-    t_rs = []
-    U_rs = []
+    dmd_train_rs_params = np.zeros((len(onebody_params + twobody_params), len(train_rs)))
+    print("dmd_train_rs_params shape: ", dmd_train_rs_params.shape)
+    E0_ind = onebody_params.index('E0')
 
-    for r in (train_rs):
+    for i, r in enumerate(train_rs):
         ai_df = ai_df_rs[f'r{r}']
         dmd = sm.OLS(ai_df["energy"], ai_df[onebody_params + twobody_params]).fit()
-        #print(dmd.summary())
-        params = dmd.params.copy()
-        params['E0'] = ( ai_df["energy"][0] - (params['t']*ai_df["t"][0] + params['U']*ai_df["U"][0]) )/4 
-        #print("New E0: ", params['E0'])
-        E0_rs.append(params['E0'])
-        t_rs.append(params['t'])
-        U_rs.append(params['U'])
+        fitted_ground_state_energy = 0
+        for j, param in enumerate(onebody_params + twobody_params):
+            if j == E0_ind:
+                continue
+            dmd_train_rs_params[j][i] = dmd.params[param]
+            fitted_ground_state_energy += dmd.params[param]*ai_df[param][0]
 
-    print("DMD parameters (E0, t, U):")
-    print("E0 ", E0_rs)
-    print("t ", t_rs)
-    print("U", U_rs)
+        dmd_train_rs_params[E0_ind][i] = ( ai_df["energy"][0] - fitted_ground_state_energy) / 4 # 4 is the number of sites ; make generic
 
-    print("Parameter function initial variables (E0, t, U):")
+    print("DMD parameters for train_rs: ", onebody_params + twobody_params)
+    print(dmd_train_rs_params)
+
+    print("Parameter function initial variables:")
+    x0 = []
+    x0_ind = [0]
     # Set up guess functions -------
     popt_E0, pcov_E0 = curve_fit(func_E0, train_rs, E0_rs)
     popt_t, pcov_t = curve_fit(func_t, train_rs, t_rs)
@@ -665,7 +662,7 @@ def mapping(
         #print("After clipping:\n", ai_var)
         norm_rs[f'r{r}'] = 2 * ai_var
 
-    keys = params.keys()
+    keys = dmd.params.keys()
 
     # OPTMIZATION LOOP START
     print("Starting optimization")
@@ -675,6 +672,7 @@ def mapping(
         x0,
         args=(
             x0_ind,
+            param_functions,
             train_rs,
             keys,
             weights,
@@ -703,6 +701,7 @@ def mapping(
     print("Evaluate train data after optimization:")
     data = evaluate_loss_CV_para_function(xmin.x,
                                      x0_ind,
+                                     param_functions,
                                      train_rs,
                                      keys,
                                      weights,
@@ -717,22 +716,26 @@ def mapping(
                                      train_states_rs,
                                      test_states_rs)
 
-    E0_test_rs = []
-    t_test_rs = []
-    U_test_rs = []
-    for r in (test_rs):
+    dmd_test_rs_params = np.zeros((len(onebody_params + twobody_params), len(test_rs)))
+    print("dmd_test_rs_params shape: ", dmd_test_rs_params.shape)
+
+    for i, r in enumerate(test_rs):
         ai_df = ai_df_rs[f'r{r}']
         dmd = sm.OLS(ai_df["energy"], ai_df[onebody_params + twobody_params]).fit()
-        #print(dmd.summary())
-        params = dmd.params.copy()
-        params['E0'] = ( ai_df["energy"][0] - (params['t']*ai_df["t"][0] + params['U']*ai_df["U"][0]) )/4 
-        #print("New E0: ", params['E0'])
-        E0_test_rs.append(params['E0'])
-        t_test_rs.append(params['t'])
-        U_test_rs.append(params['U'])
+        fitted_ground_state_energy = 0
+        for j, param in enumerate(onebody_params + twobody_params):
+            if j == E0_ind:
+                continue
+            dmd_test_rs_params[j][i] = dmd.params[param]
+            fitted_ground_state_energy += dmd.params[param]*ai_df[param][0]
+
+        dmd_test_rs_params[E0_ind][i] = ( ai_df["energy"][0] - fitted_ground_state_energy) / 4 # 4 is the number of sites ; make generic
+
+    print(dmd_test_rs_params)
 
     data_test = evaluate_loss_para_function(xmin.x,
                                      x0_ind,
+                                     param_functions,
                                      test_rs,
                                      keys,
                                      weights,

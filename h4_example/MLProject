@@ -16,7 +16,7 @@ entry_points:
         parameter0: {type: string, default: "E0,t"}
         parameter1: {type: string, default: "U"}
         parameter_function0: {type: string, default: "func_E0,func_t"}
-        parameter_function1: {type: string, default: "func_U_linear"}
+        parameter_function1: {type: string, default: "func_U"}
 
         # These parameters can be used to make quick training
         # runs for debugging purposes.

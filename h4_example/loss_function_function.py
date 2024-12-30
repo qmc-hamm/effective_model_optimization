@@ -6,6 +6,7 @@ import numpy as np
 from rich import print
 from scipy.optimize import linear_sum_assignment, minimize, curve_fit
 import solver
+from inspect import signature
 
 cache = {}  # For speedup during mulitiple ED during model optimization
 
@@ -644,9 +645,17 @@ def mapping(
     x0 = []
     x0_ind = [0]
     # Set up guess functions -------
-    popt_E0, pcov_E0 = curve_fit(func_E0, train_rs, E0_rs)
-    popt_t, pcov_t = curve_fit(func_t, train_rs, t_rs)
-    popt_U, pcov_U = curve_fit(func_U, train_rs, U_rs) # Probably rewrite using dictionaries
+    for j, param in enumerate(onebody_params + twobody_params):
+        try:
+            popt, pcov = curve_fit(function_dict[param_functions[j]], train_rs, dmd_train_rs_params[j])
+        except:
+            sig = signature(function_dict[param_functions[j]])
+            popt = np.zeros(len(sig.parameters) - 1)
+        print(f"{param} : {popt}")
+        x0.append(popt)
+        x0_ind.append( len(popt) + x0_ind[j])
+    
+    x0 = np.concatenate(x0)
 
     print(x0, x0_ind)
 

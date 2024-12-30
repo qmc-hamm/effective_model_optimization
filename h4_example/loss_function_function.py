@@ -9,9 +9,10 @@ import solver
 
 cache = {}  # For speedup during mulitiple ED during model optimization
 
+
 # Parameter functions
-def exponential(rs, d, r_0): # 2 parameters
-    x = np.exp(-d * (rs - r_0)) - 0.5  # exponential
+def exponential(rs, d, r_0, c): # 3 parameters
+    x = np.exp(-d * (rs - r_0)) - c  # exponential
     return x
 
 def sigmoid(rs, C, d, r_0): # 3 parameters
@@ -26,6 +27,10 @@ def ploynomial4(rs, a, b, c, d, e):  # 5 parameters
     x = a + b*rs + c*rs**2 + d*rs**3 + e*rs**4  # 4 degree polynomial
     return x
 
+def ploynomial5(rs, a, b, c, d, e, f):  # 6 parameters
+    x = a + b*rs + c*rs**2 + d*rs**3 + e*rs**4 + f*rs**5 # 5 degree polynomial
+    return x
+
 def func_E0(rs, d, r_0):  # 2 parameters
     x = np.exp(-d * (rs - r_0)) - 0.5  # exponential
     return x
@@ -35,10 +40,111 @@ def func_t(rs, C, d, r_0):  # 3 parameters
     x = (C / (1 + np.exp(-d * (rs - r_0)))) - C  # sigmoid, logistic
     return x
 
-def func_U(rs, a, r_0, c):  # 2 parameters
-    x = -a*1*(rs - r_0)**-1 + c  # 1/r function
+def func_U(rs, a, r_0, c):  # 3 parameters
+    x = a*(rs - r_0)**-1 + c  # 1/r function
     return x
 
+def func_U_linear(rs, a, r_0, c, b, r_1):  # 5  parameters
+    x = a*(rs - r_0)**-1 + c + b*(rs - r_1) # 1/r function + linear function
+    return x
+
+def func_U_linear_fixed(rs, a, r_0, b, r_1):  # 4  parameters
+    x = a*(rs - r_0)**-1 + 0.50 + b*(rs - r_1)**-2 # 1/r function + linear function
+    return x
+
+def unpack_exponential(rs, params):
+    d = params[0]
+    r_0 = params[1]
+    c = params[2]
+    return  exponential(rs, d, r_0, c)
+
+def unpack_sigmoid(rs, params):
+    C = params[0]
+    d = params[1]
+    r_0 = params[2]
+    return sigmoid(rs, C, d, r_0)
+
+def unpack_ploynomial3(rs, params):
+    a = params[0]
+    b = params[1]
+    c = params[2]
+    d = params[3]
+    return ploynomial3(rs, a, b, c, d)
+
+def unpack_ploynomial4(rs, params):
+    a = params[0]
+    b = params[1]
+    c = params[2]
+    d = params[3]
+    e = params[4]
+    return ploynomial4(rs, a, b, c, d, e)
+
+def unpack_ploynomial5(rs, params):
+    a = params[0]
+    b = params[1]
+    c = params[2]
+    d = params[3]
+    e = params[4]
+    f = params[5]
+    return ploynomial5(rs, a, b, c, d, e, f)
+
+def unpack_func_E0(rs, params):
+    d = params[0]
+    r_0 = params[1]
+    return func_E0(rs, d, r_0)
+
+def unpack_func_t(rs, params):
+    C = params[0]
+    d = params[1]
+    r_0 = params[2]
+    return func_t(rs, C, d, r_0)
+
+def unpack_func_U(rs, params):
+    a = params[0]
+    r_0 = params[1]
+    c = params[2]
+    return func_U(rs, a, r_0, c)
+
+def unpack_func_U_linear(rs, params):
+    a = params[0]
+    r_0 = params[1]
+    c = params[2]
+    b = params[3]
+    r_1 = params[4]
+    return func_U_linear(rs, a, r_0, c, b, r_1)
+
+def unpack_func_U_linear_fixed(rs, params):
+    a = params[0]
+    r_0 = params[1]
+    b = params[2]
+    r_1 = params[3]
+    return func_U_linear_fixed(rs, a, r_0, b, r_1)
+
+function_dict = {
+    'func_E0' : func_E0,
+    'func_t' : func_t,
+    'func_U' : func_U,
+    'func_U_linear' : func_U_linear,
+    'func_U_linear_fixed' : func_U_linear_fixed,
+    'exponential' : exponential,
+    'sigmoid' : sigmoid,
+    'ploynomial3' : ploynomial3,
+    'ploynomial4' : ploynomial4,
+    'ploynomial5' : ploynomial5,
+}
+
+unpack_func_dict = {
+    'func_E0' : unpack_func_E0,
+    'func_t' : unpack_func_t,
+    'func_U' : unpack_func_U,
+    'func_U_linear' : unpack_func_U_linear,
+    'func_U_linear_fixed' : unpack_func_U_linear_fixed,
+    'exponential' : unpack_exponential,
+    'sigmoid' : unpack_sigmoid,
+    'ploynomial3' : unpack_ploynomial3,
+    'ploynomial4' : unpack_ploynomial4,
+    'ploynomial5' : unpack_ploynomial5,
+}
 
 def descriptor_distance(
     ai_df: pd.DataFrame, model_descriptors: dict, matches: list[str], norm

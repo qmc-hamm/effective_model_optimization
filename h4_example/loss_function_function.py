@@ -754,10 +754,14 @@ def mapping(
         f["para_w_0"] = weights[0]
         f["para_w_1"] = weights[1]
         f["loss"] = xmin.fun
-        f["function parameters, E0, t, U"] = xmin.x
+        f["params"] = onebody_params + twobody_params
+        f["params functions"] = param_functions
+        f["params functions paramters"] = xmin.x
         f["Mean over r Spectrum RMSE (Ha) - Train"] = data["Mean over r Spectrum RMSE (Ha) - Train"]
         f["Mean over r Spectrum RMSE (Ha) - Validation"] = data["Mean over r Spectrum RMSE (Ha) - Validation"]
         f["Mean over r Spectrum RMSE (Ha) - Test"] = data_test["Mean over r Spectrum RMSE (Ha)"]
+        f["iterations"] = xmin.nit
+        f["termination_message"] = xmin.message
 
         mlflow.log_metrics({
             "loss": xmin.fun,
@@ -773,13 +777,8 @@ def mapping(
         for i, r in enumerate(train_rs):
             data_r = data[f"r{r}"]
 
-            for k in onebody_params + twobody_params:
-                if k == 'E0':
-                    f[f"r{r}/" + "dmd_params/" + k] = E0_rs[i]
-                if k == 't':
-                    f[f"r{r}/" + "dmd_params/" + k] = t_rs[i]
-                if k == 'U':
-                    f[f"r{r}/" + "dmd_params/" + k] = U_rs[i]
+            for j, k in enumerate(onebody_params + twobody_params):
+                f[f"r{r}/" + "dmd_params/" + k] = dmd_train_rs_params[j][i]
 
             ai_df = ai_df_rs[f"r{r}"]
             f[f"r{r}/" + "ai_spectrum_range (Ha)"] = np.max(ai_df["energy"]) - np.min(ai_df["energy"])
@@ -801,13 +800,8 @@ def mapping(
         for i, r in enumerate(test_rs):
             data_r = data_test[f"r{r}"]
 
-            for k in onebody_params + twobody_params:
-                if k == 'E0':
-                    f[f"r{r}/" + "dmd_params/" + k] = E0_test_rs[i]
-                if k == 't':
-                    f[f"r{r}/" + "dmd_params/" + k] = t_test_rs[i]
-                if k == 'U':
-                    f[f"r{r}/" + "dmd_params/" + k] = U_test_rs[i]
+            for j, k in enumerate(onebody_params + twobody_params):
+                f[f"r{r}/" + "dmd_params/" + k] = dmd_test_rs_params[j][i]
 
             ai_df = ai_df_rs[f"r{r}"]
             f[f"r{r}/" + "ai_spectrum_range (Ha)"] = np.max(ai_df["energy"]) - np.min(ai_df["energy"])
@@ -821,8 +815,5 @@ def mapping(
                         f[f"r{r}/" + "rdmd_params/" + kk] = data_r[k][kk]
                 else:
                     f[f"r{r}/" + k] = data_r[k]
-
-        f["iterations"] = xmin.nit
-        f["termination_message"] = xmin.message
 
     mlflow.log_artifact(outfile)

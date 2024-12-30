@@ -356,7 +356,7 @@ def evaluate_loss_para_function(
     norm_rs,
 ):
 
-    print(keys) # E0, t, U
+    #print(keys) # E0, t, U
 
     losses = {}
     sum_loss = 0
@@ -391,8 +391,8 @@ def evaluate_loss_para_function(
     mean_over_r_spectrum_rmse_ha = np.mean(sum_spec_rmse)
     losses["Mean over r Spectrum RMSE (Ha)"] = mean_over_r_spectrum_rmse_ha
 
-    print(x0)
-    print(sum_loss)
+    #print(x0)
+    #print(sum_loss)
 
     return losses
 
@@ -527,7 +527,7 @@ def evaluate_loss_CV_para_function(
     test_states_rs,
 ):
 
-    print(keys) # E0, t, U
+    #print(keys) # E0, t, U
 
     losses = {}
     sum_loss = 0
@@ -568,8 +568,8 @@ def evaluate_loss_CV_para_function(
     losses["Mean over r Spectrum RMSE (Ha) - Train"] = mean_over_r_spectrum_rmse_ha_train
     losses["Mean over r Spectrum RMSE (Ha) - Validation"] = mean_over_r_spectrum_rmse_ha_val
 
-    print(x0)
-    print(sum_loss)
+    #print(x0)
+    #print(sum_loss)
 
     return losses
 
@@ -651,11 +651,7 @@ def mapping(
     popt_t, pcov_t = curve_fit(func_t, train_rs, t_rs)
     popt_U, pcov_U = curve_fit(func_U, train_rs, U_rs) # Probably rewrite using dictionaries
 
-    print("E0 : d, r_0 ", popt_E0)
-    print("t  : C, d, r_0 ", popt_t)
-    print("U : a, r_0, c", popt_U) 
-    x0_ind = [[0, 1], [2, 3, 4], [5, 6, 7]]
-    x0 = np.concatenate((popt_E0, popt_t, popt_U))
+    print(x0, x0_ind)
 
     norm_rs = {}
 

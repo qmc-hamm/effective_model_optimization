@@ -12,8 +12,8 @@ cache = {}  # For speedup during mulitiple ED during model optimization
 
 
 # Parameter functions
-def exponential(rs, d, r_0, c): # 3 parameters
-    x = np.exp(-d * (rs - r_0)) - c  # exponential
+def exponential(rs, a, d, r_0, c): # 4 parameters
+    x = a*np.exp(-d*(rs - r_0)) + c  # exponential
     return x
 
 def sigmoid(rs, C, d, r_0): # 3 parameters

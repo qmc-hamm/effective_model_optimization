@@ -772,17 +772,6 @@ def mapping(
         f["iterations"] = xmin.nit
         f["termination_message"] = xmin.message
 
-        mlflow.log_metrics({
-            "loss": xmin.fun,
-            "mean_over_r_spectrum_rmse_ha_train": data["Mean over r Spectrum RMSE (Ha) - Train"],
-            "mean_over_r_spectrum_rmse_ha_val": data["Mean over r Spectrum RMSE (Ha) - Validation"],
-            "mean_over_r_spectrum_rmse_ha_test": data_test["Mean over r Spectrum RMSE (Ha)"],
-            "sum-loss": data["sum_loss"],
-            "para_w_0": weights[0],
-            "para_w_1": weights[1],
-        })
-
-
         for i, r in enumerate(train_rs):
             data_r = data[f"r{r}"]
 

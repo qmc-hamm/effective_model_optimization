@@ -5,6 +5,7 @@ import seaborn as sns
 import pandas as pd
 import h5py
 import os
+import numpy as np
 
 import mlflow
 
@@ -16,6 +17,11 @@ def make_name(parameters):
 def gather_data_to_plot(dirname, fnames, parameters):
     data = []
 
+    train_rmse = []
+    val_rmse = []
+    test_rmse = []
+    loss = []
+
     for i, fname in enumerate(fnames):
         with h5py.File(os.path.join(dirname, fname), 'r') as f:
             train_rs = f['train_rs'][()]
@@ -23,6 +29,11 @@ def gather_data_to_plot(dirname, fnames, parameters):
 
             all_rs = list(train_rs)+list(test_rs)
             all_rs.sort()
+
+            train_rmse.append( f["Mean over r Spectrum RMSE (Ha) - Train"][()] )
+            val_rmse.append( f["Mean over r Spectrum RMSE (Ha) - Validation"][()] )
+            test_rmse.append( f["Mean over r Spectrum RMSE (Ha) - Test"][()] )
+            loss.append( f["loss"][()] )
 
             for r in all_rs:
                 data_r = {}
@@ -46,6 +57,13 @@ def gather_data_to_plot(dirname, fnames, parameters):
                     data_r[f'DMD {parameter} (Ha)'] = f[f'r{r}/dmd_params/{parameter}'][()]
 
                 data.append(data_r)
+
+    mlflow.log_metrics({
+    "CV-avg_mean-over-r_spectrum-rmse_ha_train": np.mean(train_rmse),
+    "CV-avg_mean-over-r_spectrum-rmse_ha_val": np.mean(val_rmse),
+    "CV-avg_mean-over-r_spectrum-rmse_ha_test": np.mean(test_rmse),
+    "CV-avg_loss": np.mean(loss),
+    })
 
     return pd.DataFrame(data)
 

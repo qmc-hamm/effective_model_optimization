@@ -1,6 +1,7 @@
 from pyscf import fci
 import pandas as pd
 import numpy as np
+import math
 
 
 # This section as all the information for solving with <psi_i|rho|psi_j>
@@ -53,7 +54,7 @@ def eff_model_trans_solver(h1, h2, norb=4, nelec=(2, 2), nroots=36):
 
 
 def solve_effective_trans_hamiltonian(
-    onebody: dict, twobody: dict, parameters: list, nroots: int
+    onebody: dict, twobody: dict, parameters: list, nroots: int, norb: int, nelec: tuple[int, int], ci0: np.ndarray = None
 ) -> pd.DataFrame:
     """Constructs the hamiltonian to be solved and once solved compiles relavant descriptors.
 
@@ -67,14 +68,18 @@ def solve_effective_trans_hamiltonian(
         The parameters to terms to set in the Hamiltonian, should match the keys in onebody and twobody.
     nroots : int
         Number of eigenstates to solver for the hamiltonian.
+    norb : int
+        Number of orbitals or sites.
+    nelec : tuple(int, int)
+        Number of up and down electrons in the system.
+    ci0 : np.ndarray
+        The guess fcivectors.
 
     Returns
     -------
     pd.DataFrame
         Provides the descriptors of the eigenstates, <operator>, examples being energy, the <onebody>, and <twobody>.
     """
-
-    norb = 4  # should be passed in
     h1 = np.zeros((norb, norb))
     h2 = np.zeros((norb, norb, norb, norb))
     for k in onebody.keys():
@@ -85,7 +90,7 @@ def solve_effective_trans_hamiltonian(
             h2 += parameters[k] * twobody[k]
 
     h_eff_energies, h_eff_fcivec, rdm1, rdm2 = eff_model_trans_solver(
-        h1, h2, norb=norb, nelec=(2, 2), nroots=nroots
+        h1, h2, norb=norb, nelec=nelec, nroots=nroots, ci0=ci0
     )
 
     print("lengths of fcivec ", len(h_eff_energies), len(h_eff_fcivec[0]))
@@ -133,6 +138,8 @@ def eff_model_solver(h1, h2, norb=4, nelec=(2, 2), nroots=36, ci0: np.ndarray = 
             Shape (nroots, 3, norbs, norbs, norbs, norbs).
             Spin seperated ((up,up,up,up), (up,up,down,down), (down,down,down,down)) 2-body reduced density matricies.
     """
+    pspace_size = math.comb(norb, nelec[0]) * math.comb(norb, nelec[1]) # Size of Hilbert space
+
     e, fcivec = fci.direct_spin1.kernel(
         h1,
         h2,
@@ -142,8 +149,9 @@ def eff_model_solver(h1, h2, norb=4, nelec=(2, 2), nroots=36, ci0: np.ndarray = 
         max_space=30,
         max_cycle=100,
         orbsym=None,
-        davidson_only=False,  # TODO: compare timing to fci solver, once davidson solver bug in pyscf is solved
+        davidson_only=False,
         ci0=ci0,
+        pspace_size=pspace_size,
     )  # These davidson_only and ci0 can help speed up the solver
 
     n_rdm1s = np.zeros((nroots, 2, norb, norb))
@@ -160,7 +168,7 @@ def eff_model_solver(h1, h2, norb=4, nelec=(2, 2), nroots=36, ci0: np.ndarray = 
 
 
 def solve_effective_hamiltonian(
-    onebody: dict, twobody: dict, parameters: list, nroots: int, ci0: np.ndarray = None
+    onebody: dict, twobody: dict, parameters: list, nroots: int, norb: int, nelec: tuple[int, int], ci0: np.ndarray = None
 ) -> pd.DataFrame:
     """_summary_
 
@@ -174,13 +182,18 @@ def solve_effective_hamiltonian(
         The parameters to terms to set in the Hamiltonian, should match the keys in onebody and twobody.
     nroots : int
         Number of eigenstates to solver for the hamiltonian.
+    norb : int
+        Number of orbitals or sites.
+    nelec : tuple(int, int)
+        Number of up and down electrons in the system.
+    ci0 : np.ndarray
+        The guess fcivectors, size (c, c) where c = (norbs choose nelec[0]).
 
     Returns
     -------
     pd.DataFrame
         Provides the descriptors of the eigenstates, <operator>, examples being energy, the <onebody>, and <twobody>.
     """
-    norb = 4
     h1 = np.zeros((norb, norb))
     h2 = np.zeros((norb, norb, norb, norb))
     for k in onebody.keys():
@@ -191,7 +204,7 @@ def solve_effective_hamiltonian(
             h2 += parameters[k] * twobody[k]
 
     h_eff_energies, h_eff_fcivec, rdm1, rdm2 = eff_model_solver(
-        h1, h2, norb=norb, nelec=(2, 2), nroots=nroots, ci0=ci0
+        h1, h2, norb=norb, nelec=nelec, nroots=nroots, ci0=ci0
     )
 
     descriptors = {}

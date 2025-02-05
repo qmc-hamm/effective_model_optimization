@@ -23,20 +23,20 @@ def sigmoid(rs, C, d, r_0): # 3 parameters
     x = (C / (1 + np.exp(-d * (rs - r_0)))) - C 
     return x
 
-def ploynomial3(rs, a, b, c, d):  # 4 parameters
+def polynomial3(rs, a, b, c, d):  # 4 parameters
     x = a + b*rs + c*rs**2 + d*rs**3  # 3 degree polynomial
     return x
 
-def ploynomial4(rs, a, b, c, d, e):  # 5 parameters
+def polynomial4(rs, a, b, c, d, e):  # 5 parameters
     x = a + b*rs + c*rs**2 + d*rs**3 + e*rs**4  # 4 degree polynomial
     return x
 
-def ploynomial5(rs, a, b, c, d, e, f):  # 6 parameters
+def polynomial5(rs, a, b, c, d, e, f):  # 6 parameters
     x = a + b*rs + c*rs**2 + d*rs**3 + e*rs**4 + f*rs**5 # 5 degree polynomial
     return x
 
 def func_E0(rs, d, r_0):  # 2 parameters
-    x = np.exp(-d * (rs - r_0)) - 0.5  # exponential
+    x = np.exp(-d * (rs - r_0)) - (0.5*27.2114)  # exponential
     return x
 
 def func_t(rs, C, d, r_0):  # 3 parameters
@@ -56,64 +56,64 @@ def func_U_linear_fixed(rs, a, r_0, b, r_1):  # 4  parameters
     x = a*(rs - r_0)**-1 + 0.50 + b*(rs - r_1)**-2 # 1/r function + linear function
     return x
 
-def unpack_constant(rs, params):
+def unpack_constant(rs, i, params):
     c = params[0]
     return constant(rs, c)
 
-def unpack_exponential(rs, params):
+def unpack_exponential(rs, i, params):
     d = params[0]
     r_0 = params[1]
     c = params[2]
     return  exponential(rs, d, r_0, c)
 
-def unpack_sigmoid(rs, params):
+def unpack_sigmoid(rs, i, params):
     C = params[0]
     d = params[1]
     r_0 = params[2]
     return sigmoid(rs, C, d, r_0)
 
-def unpack_ploynomial3(rs, params):
+def unpack_polynomial3(rs, i, params):
     a = params[0]
     b = params[1]
     c = params[2]
     d = params[3]
-    return ploynomial3(rs, a, b, c, d)
+    return polynomial3(rs, a, b, c, d)
 
-def unpack_ploynomial4(rs, params):
+def unpack_polynomial4(rs, i, params):
     a = params[0]
     b = params[1]
     c = params[2]
     d = params[3]
     e = params[4]
-    return ploynomial4(rs, a, b, c, d, e)
+    return polynomial4(rs, a, b, c, d, e)
 
-def unpack_ploynomial5(rs, params):
+def unpack_polynomial5(rs, i, params):
     a = params[0]
     b = params[1]
     c = params[2]
     d = params[3]
     e = params[4]
     f = params[5]
-    return ploynomial5(rs, a, b, c, d, e, f)
+    return polynomial5(rs, a, b, c, d, e, f)
 
-def unpack_func_E0(rs, params):
+def unpack_func_E0(rs, i, params):
     d = params[0]
     r_0 = params[1]
     return func_E0(rs, d, r_0)
 
-def unpack_func_t(rs, params):
+def unpack_func_t(rs, i, params):
     C = params[0]
     d = params[1]
     r_0 = params[2]
     return func_t(rs, C, d, r_0)
 
-def unpack_func_U(rs, params):
+def unpack_func_U(rs, i, params):
     a = params[0]
     r_0 = params[1]
     c = params[2]
     return func_U(rs, a, r_0, c)
 
-def unpack_func_U_linear(rs, params):
+def unpack_func_U_linear(rs, i, params):
     a = params[0]
     r_0 = params[1]
     c = params[2]
@@ -121,12 +121,15 @@ def unpack_func_U_linear(rs, params):
     r_1 = params[4]
     return func_U_linear(rs, a, r_0, c, b, r_1)
 
-def unpack_func_U_linear_fixed(rs, params):
+def unpack_func_U_linear_fixed(rs, i, params):
     a = params[0]
     r_0 = params[1]
     b = params[2]
     r_1 = params[3]
     return func_U_linear_fixed(rs, a, r_0, b, r_1)
+
+def unpack_independent(rs, i, params):
+    return params[i]
 
 function_dict = {
     'constant' : constant,
@@ -137,9 +140,9 @@ function_dict = {
     'func_U_linear_fixed' : func_U_linear_fixed,
     'exponential' : exponential,
     'sigmoid' : sigmoid,
-    'ploynomial3' : ploynomial3,
-    'ploynomial4' : ploynomial4,
-    'ploynomial5' : ploynomial5,
+    'polynomial3' : polynomial3,
+    'polynomial4' : polynomial4,
+    'polynomial5' : polynomial5,
 }
 
 unpack_func_dict = {
@@ -151,9 +154,10 @@ unpack_func_dict = {
     'func_U_linear_fixed' : unpack_func_U_linear_fixed,
     'exponential' : unpack_exponential,
     'sigmoid' : unpack_sigmoid,
-    'ploynomial3' : unpack_ploynomial3,
-    'ploynomial4' : unpack_ploynomial4,
-    'ploynomial5' : unpack_ploynomial5,
+    'polynomial3' : unpack_polynomial3,
+    'polynomial4' : unpack_polynomial4,
+    'polynomial5' : unpack_polynomial5,
+    'independent' : unpack_independent,
 }
 
 def descriptor_distance(
@@ -373,13 +377,13 @@ def evaluate_loss_para_function(
     sum_loss = 0
     sum_spec_rmse = 0
 
-    for r in rs:
+    for i, r in enumerate(rs):
 
         #print(r)
 
         params = []
         for j, param in enumerate(keys):
-            params.append(unpack_func_dict[param_functions[j]](r , x0[x0_ind[j] : x0_ind[j+1]]))
+            params.append(unpack_func_dict[param_functions[j]](r, i, x0[x0_ind[j] : x0_ind[j+1]]))
 
         losses[f'r{r}'] = evaluate_loss(params,
                                            keys,
@@ -544,12 +548,12 @@ def evaluate_loss_CV_para_function(
     sum_spec_rmse_train = 0
     sum_spec_rmse_val = 0
 
-    for r in rs:
+    for i,r in enumerate(rs):
 
         #print(r)
         params = []
         for j, param in enumerate(keys):
-            params.append(unpack_func_dict[param_functions[j]](r , x0[x0_ind[j] : x0_ind[j+1]]))
+            params.append(unpack_func_dict[param_functions[j]](r, i, x0[x0_ind[j] : x0_ind[j+1]]))
 
         losses[f'r{r}'] = CV_evaluate_loss(params,
                                            keys,
@@ -650,19 +654,25 @@ def mapping(
     print("DMD parameters for train_rs: ", onebody_params + twobody_params)
     print(dmd_train_rs_params)
 
+    print("Setting x0 for optimization:")
+
     print("Parameter function initial variables:")
     x0 = []
     x0_ind = [0]
     # Set up guess functions -------
     for j, param in enumerate(onebody_params + twobody_params):
-        try:
-            popt, pcov = curve_fit(function_dict[param_functions[j]], train_rs, dmd_train_rs_params[j])
-        except:
-            sig = signature(function_dict[param_functions[j]])
-            popt = np.zeros(len(sig.parameters) - 1)
-        print(f"{param} : {popt}")
-        x0.append(popt)
-        x0_ind.append( len(popt) + x0_ind[j])
+        if param_functions[j] == 'independent':
+            x0.append(dmd_train_rs_params[j])
+            x0_ind.append( len(dmd_train_rs_params[j]) + x0_ind[j])
+        else:
+            try:
+                popt, pcov = curve_fit(function_dict[param_functions[j]], train_rs, dmd_train_rs_params[j])
+            except:
+                sig = signature(function_dict[param_functions[j]])
+                popt = np.zeros(len(sig.parameters) - 1)
+            print(f"{param} : {popt}")
+            x0.append(popt)
+            x0_ind.append( len(popt) + x0_ind[j])
     
     x0 = np.concatenate(x0)
 

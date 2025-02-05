@@ -234,3 +234,4 @@ if __name__ == "__main__":
     param_functions = args.parameter_functions[0].split(',') + args.parameter_functions[1].split(',')
 
     main(parameters, state_cutoff, w0, train_rs, niter_opt, tol_opt, maxfev_opt, nCV_iter, param_functions)
+    #main((['trace', 't_1'], ['doccp']), None, 0.9, [2.8, 3.0, 3.2, 3.6, 4.0, 4.4, 5.0], 1, 1, 1, 1, ['independent', 'independent', 'independent'])

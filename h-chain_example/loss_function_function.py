@@ -61,10 +61,11 @@ def unpack_constant(rs, i, params):
     return constant(rs, c)
 
 def unpack_exponential(rs, i, params):
-    d = params[0]
-    r_0 = params[1]
-    c = params[2]
-    return  exponential(rs, d, r_0, c)
+    a = params[0]
+    d = params[1]
+    r_0 = params[2]
+    c = params[3]
+    return  exponential(rs, a, d, r_0, c)
 
 def unpack_sigmoid(rs, i, params):
     C = params[0]

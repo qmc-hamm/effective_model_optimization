@@ -218,11 +218,52 @@ def solve_effective_hamiltonian(
     return descriptors, h_eff_fcivec
 
 
-def test():
-    """
-    put something here to test the code. Maybe hubbard model and tb model example. Similar to pyscf's example tests for fci.
-    """
+def test_H4_square_molecule_t_U_model():
+    E0 = -0.50
+    t  = -0.12
+    U  = 0.20
+
+    h1 = [[E0, t, t, 0],
+          [t, E0, 0, t],
+          [t, 0, E0, t],
+          [0, t, t, E0]]
+    h1 = np.array(h1)
+
+    h2 = np.zeros((4,4,4,4))
+    for i in range(4):
+        h2[i,i,i,i] = U
+
+    h_eff_energies, h_eff_fcivec, rdm1, rdm2 = eff_model_solver(
+        h1, h2, norb=4, nelec=(2, 2), nroots=36, ci0=None)
+
+    print(h_eff_energies)
+    print(rdm1[0])
+    print(rdm1[1])
+
+def test_Hchain_t_U_model(natoms=4):
+    E0 = -0.50
+    t  = -0.12
+    U  = 0.20
+    Ha2eV = 27.2114
+
+    h1 = np.zeros((natoms, natoms))
+
+    h2 = np.zeros((natoms, natoms, natoms, natoms))
+    for i in range(natoms):
+        h1[i,i] = E0
+        h1[i,(i+1)%natoms] = t
+        h1[i,(i+(natoms-1))%natoms] = t
+        h2[i,i,i,i] = U
+
+    nroots = math.comb(natoms, natoms//2)**2
+    print(nroots)
+
+    h_eff_energies, h_eff_fcivec, rdm1, rdm2 = eff_model_solver(
+        h1, h2, norb=natoms, nelec=(natoms//2, natoms//2), nroots=36, ci0=None)
+
+    print(h_eff_energies*Ha2eV)
+    print(h_eff_fcivec[0].shape)
 
 
 if __name__ == "__main__":
-    test()
+    test_Hchain_t_U_model(natoms=4)

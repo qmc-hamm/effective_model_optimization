@@ -328,7 +328,7 @@ def evaluate_loss(
         "row_ind": row_ind,
         "col_ind": col_ind,
         "params": params,
-        'Spectrum RMSE (Ha)': spectrum_RMSE,
+        'Spectrum RMSE': spectrum_RMSE,
     }
 
 def evaluate_loss_para_function(
@@ -375,18 +375,18 @@ def evaluate_loss_para_function(
                                            norm_rs[f'r{r}'],
                                            r)
         sum_loss += losses[f'r{r}']["loss"]
-        sum_spec_rmse += losses[f'r{r}']["Spectrum RMSE (Ha)"]
+        sum_spec_rmse += losses[f'r{r}']["Spectrum RMSE"]
 
     losses["sum_loss"] = sum_loss
     mean_over_r_spectrum_rmse_ha = np.mean(sum_spec_rmse)
-    losses["Mean over r Spectrum RMSE (Ha)"] = mean_over_r_spectrum_rmse_ha
+    losses["Mean over r Spectrum RMSE"] = mean_over_r_spectrum_rmse_ha
 
     #print(x0)
     #print(sum_loss)
 
     return losses
 
-# maps for train states first, then maps the rest of the model states to test states.
+# maps for train states first, then maps the rest of the model states to validation states.
 def CV_evaluate_loss(
     params: np.ndarray,
     keys,
@@ -400,7 +400,7 @@ def CV_evaluate_loss(
     fcivec,
     norm,
     train_states,
-    test_states,
+    val_states,
     r,
 ) -> float:
 
@@ -432,7 +432,7 @@ def CV_evaluate_loss(
 
     row_ind, col_ind = linear_sum_assignment(distance_train)
     #print("loss before reindexing", np.sum(distance_train[row_ind, col_ind]))
-    for p in np.sort(test_states):  # Reindexing row so that it is used on distance matrix
+    for p in np.sort(val_states):  # Reindexing row so that it is used on distance matrix
         ind = np.where(row_ind == p)[0][0]
         for i in range(ind, len(row_ind)):
             row_ind[i] += 1
@@ -443,54 +443,54 @@ def CV_evaluate_loss(
     # mapping the left over train states with left over model states
 
     x = np.delete(np.arange(0, nroots), col_ind)
-    dist = distance[test_states][:, x]
+    dist = distance[val_states][:, x]
     rows, cols = linear_sum_assignment(dist)
 
-    test_loss = np.sum(dist[rows, cols])
+    val_loss = np.sum(dist[rows, cols])
 
     train_row_inds = row_ind[np.where(row_ind < len(ai_df))[0]]
     train_col_inds = col_ind[np.where(row_ind < len(ai_df))[0]]
-    test_row_inds = test_states[rows]
-    test_col_inds = x[cols]
+    val_row_inds = val_states[rows]
+    val_col_inds = x[cols]
     penalty_row_inds = row_ind[np.where(row_ind >= len(ai_df))[0]]
     penalty_col_inds = col_ind[np.where(row_ind >= len(ai_df))[0]]
 
-    ntest = len(train_states)
-    ntrain = len(test_states)
+    ntrain = len(train_states)
+    nval = len(val_states)
     row_ind, col_ind = linear_sum_assignment(distance)
-    row_ind = row_ind[:ntest + ntrain]
-    col_ind = col_ind[:ntest + ntrain]
-    better_test_loss = np.sum(dist_energy[test_row_inds, test_col_inds])
+    row_ind = row_ind[:nval + ntrain]
+    col_ind = col_ind[:nval + ntrain]
+    better_val_loss = np.sum(dist_energy[val_row_inds, val_col_inds])
     # np.sqrt(np.mean((ai_df['energy'].values[test_states] - dist_energy[col_ind[test_states]])**2))
     energy_loss = np.sum(dist_energy[row_ind, col_ind])
     # np.sqrt(np.mean( (ai_df['energy'].values[row_ind] - dist_energy[col_ind])**2))
 
     spectrum_RMSE_train = np.sqrt(np.mean((ai_df['energy'].values[train_row_inds] - descriptors['energy'][train_col_inds])**2))
-    spectrum_RMSE_val = np.sqrt(np.mean((ai_df['energy'].values[test_row_inds] - descriptors['energy'][test_col_inds])**2))
+    spectrum_RMSE_val = np.sqrt(np.mean((ai_df['energy'].values[val_row_inds] - descriptors['energy'][val_col_inds])**2))
     spectrum_RMSE_trainval = np.sqrt(np.mean((ai_df['energy'].values[row_ind] - descriptors['energy'][col_ind])**2))
 
     return {
         "train_loss": loss / 2,  # train loss
-        "test_loss": test_loss / 3,
+        "val_loss": val_loss / 3,
         "norm": norm,
         "train_sloss": np.sum(dist_energy[train_row_inds, train_col_inds])*norm['energy']/ntrain,
         "train_dloss": np.sum(dist_des[train_row_inds, train_col_inds]),
-        "test_sloss": np.sum(dist_energy[test_row_inds, test_col_inds]),
-        "test_dloss": np.sum(dist_des[test_row_inds, test_col_inds]),
+        "val_sloss": np.sum(dist_energy[val_row_inds, val_col_inds]),
+        "val_dloss": np.sum(dist_des[val_row_inds, val_col_inds]),
         "penalty": np.sum(np.tile(penalty, (npenalty, 1))[:, penalty_col_inds]),
         "descriptors": descriptors,
         "distance": distance,
         "row_ind": row_ind,
         "col_ind": col_ind,
         "params": params,
-        'test_rows': np.array(test_states)[rows],
-        'test_cols': x[cols],
-        'Energy test rms error (eV)':27.2114*better_test_loss,
-        'Test loss': better_test_loss,
+        'val_rows': np.array(val_states)[rows],
+        'val_cols': x[cols],
+        'Energy val rms error (eV)':27.2114*better_val_loss,
+        'val loss': better_val_loss,
         'energy_loss': energy_loss,
-        'Spectrum RMSE Train (Ha)': spectrum_RMSE_train,
-        'Spectrum RMSE Val States (Ha)': spectrum_RMSE_val,
-        'Spectrum RMSE Val (Ha)': spectrum_RMSE_trainval,}
+        'Spectrum RMSE Train': spectrum_RMSE_train,
+        'Spectrum RMSE Val States': spectrum_RMSE_val,
+        'Spectrum RMSE Val': spectrum_RMSE_trainval,}
 
 
 def optimize_function(*args, **kwargs):
@@ -517,7 +517,7 @@ def evaluate_loss_CV_para_function(
     fcivec,
     norm_rs,
     train_states_rs,
-    test_states_rs,
+    val_states_rs,
 ):
 
     #print(keys) # E0, t, U
@@ -546,17 +546,17 @@ def evaluate_loss_CV_para_function(
                                            None,
                                            norm_rs[f'r{r}'],
                                            train_states_rs[f'r{r}'],
-                                           test_states_rs[f'r{r}'],
+                                           val_states_rs[f'r{r}'],
                                            r)
         sum_loss += losses[f'r{r}']["train_loss"]
-        sum_spec_rmse_train += losses[f'r{r}']["Spectrum RMSE Train (Ha)"]
-        sum_spec_rmse_val += losses[f'r{r}']["Spectrum RMSE Val (Ha)"]
+        sum_spec_rmse_train += losses[f'r{r}']["Spectrum RMSE Train"]
+        sum_spec_rmse_val += losses[f'r{r}']["Spectrum RMSE Val"]
 
     losses["sum_loss"] = sum_loss
     mean_over_r_spectrum_rmse_ha_train = np.mean(sum_spec_rmse_train)
     mean_over_r_spectrum_rmse_ha_val = np.mean(sum_spec_rmse_val)
-    losses["Mean over r Spectrum RMSE (Ha) - Train"] = mean_over_r_spectrum_rmse_ha_train
-    losses["Mean over r Spectrum RMSE (Ha) - Validation"] = mean_over_r_spectrum_rmse_ha_val
+    losses["Mean over r Spectrum RMSE - Train"] = mean_over_r_spectrum_rmse_ha_train
+    losses["Mean over r Spectrum RMSE - Validation"] = mean_over_r_spectrum_rmse_ha_val
 
     #print(x0)
     #print(sum_loss)
@@ -593,7 +593,7 @@ def mapping(
     max_ai_energy_rs = {}
 
     train_states_rs = {}
-    test_states_rs = {}
+    val_states_rs = {}
 
     for r in (train_rs + test_rs):
         ai_df = ai_df_rs[f'r{r}']
@@ -604,12 +604,7 @@ def mapping(
         max_ai_energy_rs[f'r{r}'] = np.max(ai_df["energy"])
 
         train_states_rs[f'r{r}'] = np.delete(np.arange(0, len(ai_df)), p_out_states)
-        test_states_rs[f'r{r}'] = p_out_states
-    
-    #boltzmann_weights_train = give_boltzmann_weights(ai_df_train["energy"], ai_df["energy"][0], beta)
-    #print(f"Boltzmann weights for beta {beta}: {boltzmann_weights_train}")
-    #boltzmann_weights_test = give_boltzmann_weights(ai_df_test["energy"], ai_df["energy"][0], beta)
-    #print(f"Boltzmann weights for beta {beta}: {boltzmann_weights_test}")
+        val_states_rs[f'r{r}'] = p_out_states
 
     # Starting parameter guess
 
@@ -692,7 +687,7 @@ def mapping(
             None,
             norm_rs,
             train_states_rs,
-            test_states_rs,
+            val_states_rs,
         ),
         jac="3-point",
         method="Powell",
@@ -721,7 +716,6 @@ def mapping(
                                      None,
                                      norm_rs,
                                      train_states_rs,
-                                     test_states_rs)
 
     dmd_test_rs_params = np.zeros((len(onebody_params + twobody_params), len(test_rs)))
     print("dmd_test_rs_params shape: ", dmd_test_rs_params.shape)
@@ -754,6 +748,7 @@ def mapping(
                                      matches,
                                      None,
                                      norm_rs)
+                                     val_states_rs)
 
     with h5py.File(outfile, "w") as f:
         f["train_rs"] = train_rs
@@ -764,9 +759,8 @@ def mapping(
         f["params"] = onebody_params + twobody_params
         f["params functions"] = param_functions
         f["params functions paramters"] = xmin.x
-        f["Mean over r Spectrum RMSE (Ha) - Train"] = data["Mean over r Spectrum RMSE (Ha) - Train"]
-        f["Mean over r Spectrum RMSE (Ha) - Validation"] = data["Mean over r Spectrum RMSE (Ha) - Validation"]
-        f["Mean over r Spectrum RMSE (Ha) - Test"] = data_test["Mean over r Spectrum RMSE (Ha)"]
+        f["Mean over r Spectrum RMSE - Train"] = data["Mean over r Spectrum RMSE - Train"]
+        f["Mean over r Spectrum RMSE - Validation"] = data["Mean over r Spectrum RMSE - Validation"]
         f["iterations"] = xmin.nit
         f["termination_message"] = xmin.message
 
@@ -777,11 +771,11 @@ def mapping(
                 f[f"r{r}/" + "dmd_params/" + k] = dmd_train_rs_params[j][i]
 
             ai_df = ai_df_rs[f"r{r}"]
-            f[f"r{r}/" + "ai_spectrum_range (Ha)"] = np.max(ai_df["energy"]) - np.min(ai_df["energy"])
+            f[f"r{r}/" + "ai_spectrum_range"] = np.max(ai_df["energy"]) - np.min(ai_df["energy"])
 
             f[f"r{r}/" + "nstates_train"] = len(train_states_rs[f"r{r}"])
-            f[f"r{r}/" + "nstates_test"] = len(test_states_rs[f"r{r}"])
-            f[f"r{r}/" + "state_ind_for_test"] = test_states_rs[f"r{r}"]
+            f[f"r{r}/" + "nstates_val"] = len(val_states_rs[f"r{r}"])
+            f[f"r{r}/" + "state_ind_for_val"] = val_states_rs[f"r{r}"]
 
             for k in data_r:
                 if k == "descriptors":

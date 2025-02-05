@@ -302,8 +302,10 @@ def evaluate_loss(
 
     params = pd.Series(params, index=keys)
 
+    N = onebody[keys[0]].shape[0] # The first key is a onebody key
+
     descriptors, fcivec = solver.solve_effective_hamiltonian(
-        onebody, twobody, params, nroots=nroots, ci0=fcivec
+        onebody, twobody, params, nroots=nroots, norb=N, nelec=(N//2,N//2), ci0=fcivec
     )
     cache[f"fcivec_{r}"] = fcivec
 
@@ -435,8 +437,10 @@ def CV_evaluate_loss(
 
     params = pd.Series(params, index=keys)
 
+    N = onebody[keys[0]].shape[0]
+
     descriptors, fcivec = solver.solve_effective_hamiltonian(
-        onebody, twobody, params, nroots=nroots, ci0=None
+        onebody, twobody, params, nroots=nroots, norb=N, nelec=(N//2,N//2), ci0=None
     )
     cache[f"fcivec_{r}"] = fcivec
 

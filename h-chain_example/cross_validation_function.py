@@ -21,11 +21,9 @@ def runCV(named_terms,
           onebody_params,
           twobody_params,
           train_rs,
-          test_rs,
           param_functions,
           minimum_1s_occupation=3.7,
           w0=1,
-          beta=0,
           p=1,
           guess_params=None,
           state_cutoff=None,
@@ -62,7 +60,7 @@ def runCV(named_terms,
     matches = onebody_params + twobody_params
     weights = [w0, 1 - w0]
 
-    loss_function.mapping(
+    loss_function.setup_train(
         onebody,
         twobody,
         onebody_params,
@@ -72,10 +70,8 @@ def runCV(named_terms,
         model_descriptors,
         matches,
         train_rs,
-        test_rs,
         param_functions,
         weights,
-        beta,
         p,
         guess_params,
         niter_opt = niter_opt,
@@ -88,9 +84,6 @@ def make_name(parameters):
     return "_".join(parameters[0]) + "_" + "_".join(parameters[1])
 
 def main(parameters, state_cutoff, w0, train_rs, niter_opt, tol_opt, maxfev_opt, nCV_iter, param_functions):
-        test_rs = list( set(all_rs) - set(train_rs))#.sort()
-        test_rs.sort()
-        print("Test rs values:", test_rs)
         with mlflow.start_run():
             # Write model and plots to temp dir
             with tempfile.TemporaryDirectory() as output_dir:
@@ -109,10 +102,8 @@ def main(parameters, state_cutoff, w0, train_rs, niter_opt, tol_opt, maxfev_opt,
                           onebody_params=parameters[0],
                           twobody_params=parameters[1],
                           train_rs=train_rs,
-                          test_rs=test_rs,
                           param_functions=param_functions,
                           w0=w0,
-                          beta=0,
                           p=1,
                           state_cutoff=state_cutoff,
                           niter_opt=niter_opt,
@@ -133,7 +124,7 @@ if __name__ == "__main__":
     parser.add_argument("--nCV_iter", type=int, default=1)
     parser.add_argument("--maxfev_opt", type=int, default=1000)
     parser.add_argument("--parameter_functions", type=str, nargs="+")
-    # param_functions = ["func_E0", "func_t", "func_U"]
+
     args = parser.parse_args()
     parameters = (args.parameters[0].split(','), args.parameters[1].split(','))
     state_cutoff = args.state_cutoff

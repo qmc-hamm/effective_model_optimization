@@ -568,7 +568,7 @@ def optimize_CV_para_function(*args, **kwargs):
     return evaluate_loss_CV_para_function(*args, **kwargs)["sum_loss"]
 
 
-def mapping(
+def setup_train(
     onebody: dict,
     twobody: dict,
     onebody_params: list,
@@ -578,7 +578,6 @@ def mapping(
     outfile: str,
     matches: list,
     train_rs: list,
-    test_rs: list,
     param_functions: list,
     weights: list,
     p: int,
@@ -589,18 +588,16 @@ def mapping(
     maxfev_opt=10000, 
 ):  
     ai_df_train_rs = {}
-    ai_df_test_rs = {}
     max_ai_energy_rs = {}
 
     train_states_rs = {}
     val_states_rs = {}
 
-    for r in (train_rs + test_rs):
+    for r in (train_rs):
         ai_df = ai_df_rs[f'r{r}']
         p_out_states = np.random.choice(np.arange(0, len(ai_df)), size=p, replace=False)
         #  p_out_states = np.array([p]) # this p is for 30-k_groups, leaving out data 1-by-1
         ai_df_train_rs[f'r{r}'] = ai_df.drop(p_out_states, axis=0)
-        ai_df_test_rs[f'r{r}'] = ai_df.loc[p_out_states]
         max_ai_energy_rs[f'r{r}'] = np.max(ai_df["energy"])
 
         train_states_rs[f'r{r}'] = np.delete(np.arange(0, len(ai_df)), p_out_states)
@@ -653,7 +650,7 @@ def mapping(
 
     norm_rs = {}
 
-    for r in (train_rs + test_rs):
+    for r in (train_rs):
         ai_df = ai_df_rs[f'r{r}']
         ai_df_floats = ai_df.select_dtypes(include=[np.float64]) # Make sure no columns with non floats get included
         ai_var = np.var(ai_df_floats, axis=0)
@@ -716,43 +713,10 @@ def mapping(
                                      None,
                                      norm_rs,
                                      train_states_rs,
-
-    dmd_test_rs_params = np.zeros((len(onebody_params + twobody_params), len(test_rs)))
-    print("dmd_test_rs_params shape: ", dmd_test_rs_params.shape)
-
-    for i, r in enumerate(test_rs):
-        ai_df = ai_df_rs[f'r{r}']
-        dmd = sm.OLS(ai_df["energy"], ai_df[onebody_params + twobody_params]).fit()
-        fitted_ground_state_energy = 0
-        for j, param in enumerate(onebody_params + twobody_params):
-            if j == E0_ind:
-                continue
-            dmd_test_rs_params[j][i] = dmd.params[param]
-            fitted_ground_state_energy += dmd.params[param]*ai_df[param][0]
-
-        dmd_test_rs_params[E0_ind][i] = ( ai_df["energy"][0] - fitted_ground_state_energy) / 4 # 4 is the number of sites ; make generic
-
-    print(dmd_test_rs_params)
-
-    data_test = evaluate_loss_para_function(xmin.x,
-                                     x0_ind,
-                                     param_functions,
-                                     test_rs,
-                                     keys,
-                                     weights,
-                                     onebody,
-                                     twobody,
-                                     ai_df_rs,
-                                     max_ai_energy_rs,
-                                     nroots,
-                                     matches,
-                                     None,
-                                     norm_rs)
                                      val_states_rs)
 
     with h5py.File(outfile, "w") as f:
         f["train_rs"] = train_rs
-        f["test_rs"] = test_rs
         f["para_w_0"] = weights[0]
         f["para_w_1"] = weights[1]
         f["loss"] = xmin.fun
@@ -787,22 +751,69 @@ def mapping(
                 else:
                     f[f"r{r}/" + k] = data_r[k]
 
-        for i, r in enumerate(test_rs):
-            data_r = data_test[f"r{r}"]
+def inference(
+    onebody: dict,
+    twobody: dict,
+    onebody_params: list,
+    twobody_params: list,
+    ai_df_rs: dict[str, pd.DataFrame],
+    inference_name: str,
+    nroots: int,
+    outfile: str,
+    matches: list,
+    rs : list,
+    params: dict[str, list],
+    clip_val=1,
+):  
+    max_ai_energy_rs = {}
+    norm_rs = {}
+    natoms = onebody[matches[0]].shape[0]
 
-            for j, k in enumerate(onebody_params + twobody_params):
-                f[f"r{r}/" + "dmd_params/" + k] = dmd_test_rs_params[j][i]
+    for r in rs:
+        ai_df = ai_df_rs[f'r{r}']
+        max_ai_energy_rs[f'r{r}'] = np.max(ai_df["energy"])
 
-            ai_df = ai_df_rs[f"r{r}"]
-            f[f"r{r}/" + "ai_spectrum_range (Ha)"] = np.max(ai_df["energy"]) - np.min(ai_df["energy"])
+        ai_df_floats = ai_df.select_dtypes(include=[np.float64]) # Make sure no columns with non floats get included
+        ai_var = np.var(ai_df_floats, axis=0)
+        #print("Before clipping:\n", ai_var)
+        des_var = ai_var.loc[ai_var.index != 'energy']
+        des_var = np.clip(des_var, clip_val, np.max(des_var))  # clip so that small variances are set to 1
+        ai_var.loc[ai_var.index != 'energy'] = des_var
+        #print("After clipping:\n", ai_var)
+        norm_rs[f'r{r}'] = 2 * ai_var
+
+    data = {}
+
+    print(f"Evaluating Inference natoms {natoms}")
+
+    for r in rs:
+        data[f'r{r}'] =  evaluate_loss(params[f'r{r}'],
+                                    matches,
+                                    [1.0, 0.0],
+                                    onebody,
+                                    twobody,
+                                    ai_df_rs[f'r{r}'],
+                                    max_ai_energy_rs[f'r{r}'],
+                                    nroots,
+                                    matches,
+                                    None,
+                                    norm_rs[f'r{r}'],
+                                    r)
+
+    with h5py.File(outfile, "a") as f:
+        inf_str = f"inference_{inference_name}/"
+        f[inf_str+f"rs"] = rs
+        f[inf_str+f"natoms"] = natoms
+
+        for r in rs:
+            data_r = data[f"r{r}"]
 
             for k in data_r:
                 if k == "descriptors":
                     for kk in data_r[k]:
-                        f[f"r{r}/" + "test/" + k + "/" + kk] = data_r[k][kk]
+                        f[inf_str+f"r{r}/" + "test/" + k + "/" + kk] = data_r[k][kk]
                 elif k == "params":
                     for kk in onebody_params + twobody_params:
-                        f[f"r{r}/" + "rdmd_params/" + kk] = data_r[k][kk]
+                        f[inf_str+f"r{r}/" + "rdmd_params/" + kk] = data_r[k][kk]
                 else:
-                    f[f"r{r}/" + k] = data_r[k]
-
+                    f[inf_str+f"r{r}/" + k] = data_r[k]

@@ -1,4 +1,3 @@
-import mlflow
 import pandas as pd
 import statsmodels.api as sm
 import h5py
@@ -825,4 +824,3 @@ def mapping(
                 else:
                     f[f"r{r}/" + k] = data_r[k]
 
-    mlflow.log_artifact(outfile)

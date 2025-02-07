@@ -7,7 +7,8 @@ import mlflow
 
 # Hyperparameters
 parameter_sets = [
-    (['trace'], ['sisj', 'doccp']),
+    #(['trace'], ['sisj', 'doccp']),
+    (['trace', 't_1'], ['doccp']),
     #(['E0', 't'], ['U']),
     # (['E0', 't', 'tdiag'], ['U']),
     #(['E0', 't'], ['U', 'V']),
@@ -20,20 +21,25 @@ parameter_sets = [
     # (['E0', 't','tdiag'], ['U', 'V','J']),
 ]
 param_function_sets = [
-    {'trace':'func_E0', 't_1':'func_t', 'doccp':'func_U', 'sisj':'polynomial5'},
+#    {'trace':'independent', 'doccp':'independent', 't_1':'independent'},
+#    {'trace':'func_E0', 'doccp':'independent', 't_1':'independent'},
+#    {'trace':'func_E0', 'doccp':'independent', 't_1':'polynomial5'},
+    {'trace':'func_E0', 'doccp':'independent', 't_1':'exponential'},
 ]
 rs_set = [
-    [2.2, 2.8, 3.2, 3.6, 4.0, 4.4, 5.0]
+    #[2.0, 2.2, 2.4, 2.6, 2.8, 3.0, 3.2, 3.6, 4.0, 4.4, 5.0]
+    [2.8, 3.0, 3.2, 3.6, 4.0, 4.4, 5.0]
     #[2.2, 2.8, 3.2, 3.6, 4.0, 4.4]  # Test Workflow
 ]
 state_cutoffs = [
-    6 # Test Workflow
+    None # Test Workflow
     #8, 10, 12, 14
 ]
 w0s = [
-    # 1.0, 0.95, 0.9, 0.85, 0.8
-    # 1.0, 0.9, 0.8, 0.7, 0.6
-    0.9  # Test Workflow
+    1.0, 0.9, 0.8
+#    1.0, 0.95, 0.9, 0.85, 0.8
+#    1.0, 0.9, 0.8, 0.7, 0.6
+#    0.8  # Test Workflow
 ]
 
 

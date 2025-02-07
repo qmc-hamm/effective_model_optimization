@@ -763,7 +763,7 @@ def inference(
     outfile: str,
     matches: list,
     rs : list,
-    params: dict[str, list],
+    params_dict: dict[str, list],
     clip_val=1,
 ):  
     max_ai_energy_rs = {}
@@ -788,7 +788,7 @@ def inference(
     print(f"Evaluating Inference natoms {natoms}")
 
     for r in rs:
-        data[f'r{r}'] =  evaluate_loss(params[f'r{r}'],
+        data[f'r{r}'] =  evaluate_loss(params_dict[f'r{r}'],
                                     matches,
                                     [1.0, 0.0],
                                     onebody,

@@ -75,7 +75,7 @@ def plot_model(dirname: str, fnames: list[str], inference_names:list[str], param
     mlflow.log_artifact(csv_file)
 
     plot_file = f'{dirname}/Spectrum_RMSEvs_r.png'
-    sns.lineplot(data=df[:10], x='r (Bohr)', y='Spectrum RMSE Train (eV)', label="Train")
+    sns.lineplot(data=df, x='r (Bohr)', y='Spectrum RMSE Train (eV)', label="Train")
     sns.lineplot(data=df, x='r (Bohr)', y='Spectrum RMSE Val (eV)', label="Validation")
     for inference_name in inference_names:
         sns.lineplot(data=df, x='r (Bohr)', y=f'Spectrum RMSE Test {inference_name} (eV)', label=f"Test {inference_name}")

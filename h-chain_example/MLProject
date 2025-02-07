@@ -11,19 +11,19 @@ entry_points:
     # Run a single cross-validation training step
     parameters:
         state_cutoff: {type: float, default: 6}
-        train_rs: {type: str, default: "2.2, 2.8, 3.2, 3.6, 4.0, 4.4"}
+        train_rs: {type: str, default: "2.2, 2.8, 3.2, 3.6, 4.0, 4.4, 5.0"}
         w0: {type: float, default: 0.9}
-        parameter0: {type: string, default: "trace"}
-        parameter1: {type: string, default: "sisj,doccp"}
-        parameter_function0: {type: string, default: "func_E0"}
-        parameter_function1: {type: string, default: "ploynomial5,constant"}
+        parameter0: {type: string, default: "trace, t_1"}
+        parameter1: {type: string, default: "doccp"}
+        parameter_function0: {type: string, default: "independent"}
+        parameter_function1: {type: string, default: "independent,independent"}
 
         # These parameters can be used to make quick training
         # runs for debugging purposes.
-        niter_opt: {type: float, default: 1}
-        tol_opt: {type: float, default: 0.00000001}
-        maxfev_opt: {type: float, default: 1}
-        nCV_iter: {type: float, default: 1}
+        niter_opt: {type: float, default: 1000}
+        tol_opt: {type: float, default: 1e-7}
+        maxfev_opt: {type: float, default: 100000}
+        nCV_iter: {type: float, default: 6}
 
     command: "python cross_validation_function.py \
               --state_cutoff {state_cutoff} \

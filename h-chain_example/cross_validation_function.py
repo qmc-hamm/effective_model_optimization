@@ -9,6 +9,7 @@ import itertools
 import argparse
 import sys
 import mlflow
+import numpy as np
 
 from plot_model import plot_model
 
@@ -105,7 +106,7 @@ def runInference(named_terms,
             twobody_keys.append(k)
 
     ai_df_rs = {}
-    for r in all_rs:
+    for r in rs:
         ai_df = pd.read_csv(ai_dir)
         ai_df = ai_df[ai_df.r == r]
         ai_df = ai_df[ai_df.doccp < 0.8]  # Only doing spin states for now
@@ -114,18 +115,16 @@ def runInference(named_terms,
         ai_df = ai_df.reset_index()
         ai_df_rs[f'r{r}'] = ai_df
 
-    #print(ai_df_rs)
-
     matches = onebody_params + twobody_params
 
-    params = {}
+    params_dict = {}
 
     with h5py.File(model_descriptors, 'r') as f:
         for r in rs:
             param_list = []
             for parameter in matches:
                 param_list.append(f[f'r{r}/rdmd_params/{parameter}'][()])
-            params[f'r{r}'] = param_list
+            params_dict[f'r{r}'] = np.array(param_list)
 
     loss_function.inference(
         onebody,
@@ -138,7 +137,7 @@ def runInference(named_terms,
         model_descriptors,
         matches,
         rs,
-        params
+        params_dict,
     )
 
 
@@ -177,7 +176,7 @@ def main(parameters, state_cutoff, w0, train_rs, niter_opt, tol_opt, maxfev_opt,
                           ai_dir="ai_data/hchain6.csv",
                           model_descriptors=model_file_path,
                           inference_name="natoms6_casscf",
-                          nroots=40,
+                          nroots=100,
                           onebody_params=parameters[0],
                           twobody_params=parameters[1],
                           rs=train_rs,
@@ -188,7 +187,7 @@ def main(parameters, state_cutoff, w0, train_rs, niter_opt, tol_opt, maxfev_opt,
                           ai_dir="ai_data/hchain8_casscf.csv",
                           model_descriptors=model_file_path,
                           inference_name="natoms8_casscf",
-                          nroots=100,
+                          nroots=200,
                           onebody_params=parameters[0],
                           twobody_params=parameters[1],
                           rs=[3.0],#[2.0, 2.2, 2.4, 2.6, 2.8, 3.0, 3.2, 3.6, 4.0, 4.4],
@@ -199,7 +198,7 @@ def main(parameters, state_cutoff, w0, train_rs, niter_opt, tol_opt, maxfev_opt,
                           ai_dir="ai_data/hchain8_vmc.csv",
                           model_descriptors=model_file_path,
                           inference_name="natoms8_vmc",
-                          nroots=100,
+                          nroots=200,
                           onebody_params=parameters[0],
                           twobody_params=parameters[1],
                           rs=[3.0],#[2.0, 2.2, 2.4, 2.6, 2.8, 3.0, 3.2, 3.6, 4.0, 4.4],
@@ -234,4 +233,4 @@ if __name__ == "__main__":
     param_functions = args.parameter_functions[0].split(',') + args.parameter_functions[1].split(',')
 
     main(parameters, state_cutoff, w0, train_rs, niter_opt, tol_opt, maxfev_opt, nCV_iter, param_functions)
-    #main((['trace', 't_1'], ['doccp']), None, 0.9, [2.8, 3.0, 3.2, 3.6, 4.0, 4.4, 5.0], 1, 1, 1, 1, ['independent', 'independent', 'independent'])
+    #main((['trace', 't_1'], ['doccp']), None, 0.9, [2.0, 2.2, 2.4, 2.6, 2.8, 3.0, 3.2, 3.6, 4.0, 4.4, 5.0], 1, 1, 10, 1, ['independent', 'independent', 'independent'])

@@ -138,7 +138,7 @@ def eff_model_solver(h1, h2, norb=4, nelec=(2, 2), nroots=36, ci0: np.ndarray = 
             Shape (nroots, 3, norbs, norbs, norbs, norbs).
             Spin seperated ((up,up,up,up), (up,up,down,down), (down,down,down,down)) 2-body reduced density matricies.
     """
-    pspace_size = math.comb(norb, nelec[0]) * math.comb(norb, nelec[1]) # Size of Hilbert space
+    pspace_size = math.comb(norb, nelec[0]) * math.comb(norb, nelec[1])  # Size of Hilbert space
 
     e, fcivec = fci.direct_spin1.kernel(
         h1,
@@ -229,9 +229,9 @@ def test_H4_square_molecule_t_U_model():
           [0, t, t, E0]]
     h1 = np.array(h1)
 
-    h2 = np.zeros((4,4,4,4))
+    h2 = np.zeros((4, 4, 4, 4))
     for i in range(4):
-        h2[i,i,i,i] = U
+        h2[i, i, i, i] = U
 
     h_eff_energies, h_eff_fcivec, rdm1, rdm2 = eff_model_solver(
         h1, h2, norb=4, nelec=(2, 2), nroots=36, ci0=None)
@@ -239,6 +239,7 @@ def test_H4_square_molecule_t_U_model():
     print(h_eff_energies)
     print(rdm1[0])
     print(rdm1[1])
+
 
 def test_Hchain_t_U_model(natoms=4):
     E0 = -0.50
@@ -250,18 +251,18 @@ def test_Hchain_t_U_model(natoms=4):
 
     h2 = np.zeros((natoms, natoms, natoms, natoms))
     for i in range(natoms):
-        h1[i,i] = E0
-        h1[i,(i+1)%natoms] = t
-        h1[i,(i+(natoms-1))%natoms] = t
-        h2[i,i,i,i] = U
+        h1[i, i] = E0
+        h1[i, (i + 1) % natoms] = t
+        h1[i, (i + (natoms - 1)) % natoms] = t
+        h2[i, i, i, i] = U
 
-    nroots = math.comb(natoms, natoms//2)**2
+    nroots = math.comb(natoms, natoms // 2)**2
     print(nroots)
 
     h_eff_energies, h_eff_fcivec, rdm1, rdm2 = eff_model_solver(
-        h1, h2, norb=natoms, nelec=(natoms//2, natoms//2), nroots=36, ci0=None)
+        h1, h2, norb=natoms, nelec=(natoms // 2, natoms // 2), nroots=36, ci0=None)
 
-    print(h_eff_energies*Ha2eV)
+    print(h_eff_energies * Ha2eV)
     print(h_eff_fcivec[0].shape)
 
 

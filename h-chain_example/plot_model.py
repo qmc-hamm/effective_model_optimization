@@ -1,5 +1,3 @@
-import tempfile
-
 import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
@@ -28,9 +26,9 @@ def gather_data_to_plot(dirname, fnames, inference_names, parameters):
             all_rs = list(train_rs)
             all_rs.sort()
 
-            train_rmse.append( f["Mean over r Spectrum RMSE - Train"][()] )
-            val_rmse.append( f["Mean over r Spectrum RMSE - Validation"][()] )
-            loss.append( f["loss"][()] )
+            train_rmse.append(f["Mean over r Spectrum RMSE - Train"][()])
+            val_rmse.append(f["Mean over r Spectrum RMSE - Validation"][()])
+            loss.append(f["loss"][()])
 
             r_inference = {}
             for inference_name in inference_names:
@@ -55,21 +53,20 @@ def gather_data_to_plot(dirname, fnames, inference_names, parameters):
                 for inference_name in inference_names:
                     if r in r_inference[f"{inference_name}"]:
                         data_r[f'Spectrum RMSE Test {inference_name} (eV)'] = f[f'inference_{inference_name}/r{r}/Spectrum RMSE'][()]
-                
+
                 data.append(data_r)
 
-    mlflow.log_metrics({
-    "CV-avg_mean-over-r_spectrum-rmse_ha_train": np.mean(train_rmse),
-    "CV-avg_mean-over-r_spectrum-rmse_ha_val": np.mean(val_rmse),
-    "CV-avg_loss": np.mean(loss),
-    })
+    mlflow.log_metrics({"CV-avg_mean-over-r_spectrum-rmse_ha_train": np.mean(train_rmse),
+                        "CV-avg_mean-over-r_spectrum-rmse_ha_val": np.mean(val_rmse),
+                        "CV-avg_loss": np.mean(loss),
+                        })
 
     return pd.DataFrame(data)
 
 
-def plot_model(dirname: str, fnames: list[str], inference_names:list[str], parameters: tuple[list[str], list[str]]) -> str:
-    df = gather_data_to_plot(dirname, fnames, inference_names, parameters[0]+parameters[1])
-    
+def plot_model(dirname: str, fnames: list[str], inference_names: list[str], parameters: tuple[list[str], list[str]]) -> str:
+    df = gather_data_to_plot(dirname, fnames, inference_names, parameters[0] + parameters[1])
+
     csv_file = f'{dirname}/Processed_CV_data.csv'
     df.to_csv(csv_file)
     mlflow.log_artifact(csv_file)
@@ -86,7 +83,7 @@ def plot_model(dirname: str, fnames: list[str], inference_names:list[str], param
 
     mlflow.log_artifact(plot_file)
 
-    for parameter in parameters[0]+parameters[1]:
+    for parameter in (parameters[0] + parameters[1]):
         plot_file2 = f'{dirname}/RDMD_{parameter}vs_r.png'
         sns.lineplot(data=df, x='r (Bohr)', y=f'RDMD {parameter} (eV)', label="RDMD")
         sns.lineplot(data=df, x='r (Bohr)', y=f'DMD {parameter} (eV)', label="DMD")
@@ -110,8 +107,4 @@ if __name__ == "__main__":
 
     inference_names = ["natoms6_casscf", "natoms8_casscf", "natoms8_vmc"]
 
-    plot_model(".", files, inference_names,
-               (['E0', 't'], ['U']) )
-
-    
-        
+    plot_model(".", files, inference_names, (['E0', 't'], ['U']))

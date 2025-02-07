@@ -1,19 +1,16 @@
-import tempfile
-from tempfile import tempdir
-
-import h5py
-import pandas as pd
-import loss_function_function as loss_function
-import os
-import itertools
-import argparse
-import sys
-import mlflow
 import numpy as np
+import pandas as pd
+import tempfile
+import h5py
+import os
+import argparse
+import mlflow
 
+import loss_function_function as loss_function
 from plot_model import plot_model
 
 all_rs = [2.0, 2.2, 2.4, 2.6, 2.8, 3.0, 3.2, 3.6, 4.0, 4.4, 5.0] # all ai_data rs
+
 
 def runCV(named_terms,
           ai_dir,
@@ -32,7 +29,7 @@ def runCV(named_terms,
           tol_opt=1e-2,
           maxfev_opt=1000.0,
           tmpdirname=None
-):
+          ):
 
     onebody = {}
     twobody = {}
@@ -75,23 +72,24 @@ def runCV(named_terms,
         weights,
         p,
         guess_params,
-        niter_opt = niter_opt,
-        tol_opt = tol_opt,
-        maxfev_opt = maxfev_opt,
+        niter_opt=niter_opt,
+        tol_opt=tol_opt,
+        maxfev_opt=maxfev_opt,
     )
 
+
 def runInference(named_terms,
-          ai_dir,
-          model_descriptors,
-          inference_name,
-          nroots,
-          onebody_params,
-          twobody_params,
-          rs,
-          minimum_1s_occupation=3.7,
-          state_cutoff=None,
-          tmpdirname=None
-):
+                 ai_dir,
+                 model_descriptors,
+                 inference_name,
+                 nroots,
+                 onebody_params,
+                 twobody_params,
+                 rs,
+                 minimum_1s_occupation=3.7,
+                 state_cutoff=None,
+                 tmpdirname=None
+                 ):
 
     onebody = {}
     twobody = {}
@@ -144,70 +142,72 @@ def runInference(named_terms,
 def make_name(parameters):
     return "_".join(parameters[0]) + "_" + "_".join(parameters[1])
 
+
 def main(parameters, state_cutoff, w0, train_rs, niter_opt, tol_opt, maxfev_opt, nCV_iter, param_functions):
-        with mlflow.start_run():
-            # Write model and plots to temp dir
-            with tempfile.TemporaryDirectory() as output_dir:
-                model_files = []
-                for i in range(nCV_iter):
-                    pname = make_name(parameters)
-                    dirname = os.path.join(output_dir,f"func_model_data_{state_cutoff}_{w0}")
-                    if not os.path.exists(dirname):
-                        os.makedirs(dirname)
-                    model_file_path = f"{dirname}/{pname}_{i}.hdf5"
+    with mlflow.start_run():
+        # Write model and plots to temp dir
+        with tempfile.TemporaryDirectory() as output_dir:
+            model_files = []
+            for i in range(nCV_iter):
+                pname = make_name(parameters)
+                dirname = os.path.join(output_dir, f"func_model_data_{state_cutoff}_{w0}")
+                if not os.path.exists(dirname):
+                    os.makedirs(dirname)
+                model_file_path = f"{dirname}/{pname}_{i}.hdf5"
 
-                    runCV(named_terms="hchain4_named_operators.hdf5",
-                          ai_dir="ai_data/hchain4.csv",
-                          model_descriptors=model_file_path,
-                          nroots=36,
-                          onebody_params=parameters[0],
-                          twobody_params=parameters[1],
-                          train_rs=train_rs,
-                          param_functions=param_functions,
-                          w0=w0,
-                          p=1,
-                          state_cutoff=state_cutoff,
-                          niter_opt=niter_opt,
-                          tol_opt=tol_opt,
-                          maxfev_opt=maxfev_opt
-                          )
+                runCV(named_terms="hchain4_named_operators.hdf5",
+                      ai_dir="ai_data/hchain4.csv",
+                      model_descriptors=model_file_path,
+                      nroots=36,
+                      onebody_params=parameters[0],
+                      twobody_params=parameters[1],
+                      train_rs=train_rs,
+                      param_functions=param_functions,
+                      w0=w0,
+                      p=1,
+                      state_cutoff=state_cutoff,
+                      niter_opt=niter_opt,
+                      tol_opt=tol_opt,
+                      maxfev_opt=maxfev_opt
+                      )
 
-                    runInference(named_terms="hchain6_named_operators.hdf5",
-                          ai_dir="ai_data/hchain6.csv",
-                          model_descriptors=model_file_path,
-                          inference_name="natoms6_casscf",
-                          nroots=100,
-                          onebody_params=parameters[0],
-                          twobody_params=parameters[1],
-                          rs=train_rs,
-                          state_cutoff=state_cutoff,
-                          )
+                runInference(named_terms="hchain6_named_operators.hdf5",
+                             ai_dir="ai_data/hchain6.csv",
+                             model_descriptors=model_file_path,
+                             inference_name="natoms6_casscf",
+                             nroots=100,
+                             onebody_params=parameters[0],
+                             twobody_params=parameters[1],
+                             rs=train_rs,
+                             state_cutoff=state_cutoff,
+                             )
 
-                    runInference(named_terms="hchain8_named_operators.hdf5",
-                          ai_dir="ai_data/hchain8_casscf.csv",
-                          model_descriptors=model_file_path,
-                          inference_name="natoms8_casscf",
-                          nroots=200,
-                          onebody_params=parameters[0],
-                          twobody_params=parameters[1],
-                          rs=[3.0],#[2.0, 2.2, 2.4, 2.6, 2.8, 3.0, 3.2, 3.6, 4.0, 4.4],
-                          state_cutoff=state_cutoff,
-                          )
+                runInference(named_terms="hchain8_named_operators.hdf5",
+                             ai_dir="ai_data/hchain8_casscf.csv",
+                             model_descriptors=model_file_path,
+                             inference_name="natoms8_casscf",
+                             nroots=200,
+                             onebody_params=parameters[0],
+                             twobody_params=parameters[1],
+                             rs=[3.0],#[2.0, 2.2, 2.4, 2.6, 2.8, 3.0, 3.2, 3.6, 4.0, 4.4],
+                             state_cutoff=state_cutoff,
+                             )
 
-                    runInference(named_terms="hchain8_named_operators.hdf5",
-                          ai_dir="ai_data/hchain8_vmc.csv",
-                          model_descriptors=model_file_path,
-                          inference_name="natoms8_vmc",
-                          nroots=200,
-                          onebody_params=parameters[0],
-                          twobody_params=parameters[1],
-                          rs=[3.0],#[2.0, 2.2, 2.4, 2.6, 2.8, 3.0, 3.2, 3.6, 4.0, 4.4],
-                          state_cutoff=state_cutoff,
-                          ) 
+                runInference(named_terms="hchain8_named_operators.hdf5",
+                             ai_dir="ai_data/hchain8_vmc.csv",
+                             model_descriptors=model_file_path,
+                             inference_name="natoms8_vmc",
+                             nroots=200,
+                             onebody_params=parameters[0],
+                             twobody_params=parameters[1],
+                             rs=[3.0],#[2.0, 2.2, 2.4, 2.6, 2.8, 3.0, 3.2, 3.6, 4.0, 4.4],
+                             state_cutoff=state_cutoff,
+                             ) 
 
-                    mlflow.log_artifact(model_file_path)
-                    model_files.append(model_file_path)
-                plot_model(output_dir, model_files, ["natoms6_casscf", "natoms8_casscf", "natoms8_vmc"], parameters) # Artifacts the plots to mlflow inside function
+                mlflow.log_artifact(model_file_path)
+                model_files.append(model_file_path)
+            plot_model(output_dir, model_files, ["natoms6_casscf", "natoms8_casscf", "natoms8_vmc"], parameters) # Artifacts the plots to mlflow inside function
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

@@ -24,7 +24,7 @@ param_function_sets = [
 #    {'trace':'independent', 'doccp':'independent', 't_1':'independent'},
 #    {'trace':'func_E0', 'doccp':'independent', 't_1':'independent'},
 #    {'trace':'func_E0', 'doccp':'independent', 't_1':'polynomial5'},
-    {'trace':'func_E0', 'doccp':'independent', 't_1':'exponential'},
+    {'trace': 'func_E0', 'doccp': 'independent', 't_1': 'exponential'},
 ]
 rs_set = [
     #[2.0, 2.2, 2.4, 2.6, 2.8, 3.0, 3.2, 3.6, 4.0, 4.4, 5.0]
@@ -141,6 +141,7 @@ def run_train(experiment_id,
     p = mlflow.projects.run(**kwargs)
     return p
 
+
 parser = argparse.ArgumentParser()
 parser.add_argument("--training_backend", type=str)
 parser.add_argument("--training_backend_config",
@@ -157,10 +158,10 @@ with mlflow.start_run(run_id=provided_run_id) as run:
 
     # Hyperparameter sweep step
     for parameters, parameter_function_dict, train_rs, state_cutoff, w0 in itertools.product(parameter_sets,
-                                                              param_function_sets,
-                                                              rs_set,
-                                                              state_cutoffs,
-                                                              w0s):
+                                                                                             param_function_sets,
+                                                                                             rs_set,
+                                                                                             state_cutoffs,
+                                                                                             w0s):
         
         param_functions = [[],[]]
         for param in parameters[0]:

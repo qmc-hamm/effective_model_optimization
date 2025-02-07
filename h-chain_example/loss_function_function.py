@@ -1,11 +1,13 @@
-import pandas as pd
-import statsmodels.api as sm
-import h5py
 import numpy as np
-from rich import print
-from scipy.optimize import linear_sum_assignment, minimize, curve_fit
-import solver
+import pandas as pd
 from inspect import signature
+import h5py
+from rich import print
+
+import statsmodels.api as sm
+from scipy.optimize import linear_sum_assignment, minimize, curve_fit
+
+import solver
 
 cache = {}  # For speedup during mulitiple ED during model optimization
 
@@ -15,50 +17,62 @@ def constant(rs, c):
     x = c
     return x
 
-def exponential(rs, a, d, r_0, c): # 4 parameters
-    x = a*np.exp(-d*(rs - r_0)) + c  # exponential
+
+def exponential(rs, a, d, r_0, c):  # 4 parameters
+    x = a * np.exp(-d * (rs - r_0)) + c  # exponential
     return x
 
-def sigmoid(rs, C, d, r_0): # 3 parameters
+
+def sigmoid(rs, C, d, r_0):  # 3 parameters
     x = (C / (1 + np.exp(-d * (rs - r_0)))) - C 
     return x
 
+
 def polynomial3(rs, a, b, c, d):  # 4 parameters
-    x = a + b*rs + c*rs**2 + d*rs**3  # 3 degree polynomial
+    x = a + b * rs + c * rs**2 + d * rs**3  # 3 degree polynomial
     return x
+
 
 def polynomial4(rs, a, b, c, d, e):  # 5 parameters
     x = a + b*rs + c*rs**2 + d*rs**3 + e*rs**4  # 4 degree polynomial
     return x
 
+
 def polynomial5(rs, a, b, c, d, e, f):  # 6 parameters
-    x = a + b*rs + c*rs**2 + d*rs**3 + e*rs**4 + f*rs**5 # 5 degree polynomial
+    x = a + b*rs + c*rs**2 + d*rs**3 + e*rs**4 + f*rs**5  # 5 degree polynomial
     return x
+
 
 def func_E0(rs, d, r_0):  # 2 parameters
     x = np.exp(-d * (rs - r_0)) - (0.5*27.2114)  # exponential
     return x
+
 
 def func_t(rs, C, d, r_0):  # 3 parameters
     # C is carrying capacity, i.e. min(t)
     x = (C / (1 + np.exp(-d * (rs - r_0)))) - C  # sigmoid, logistic
     return x
 
+
 def func_U(rs, a, r_0, c):  # 3 parameters
     x = a*(rs - r_0)**-1 + c  # 1/r function
     return x
 
+
 def func_U_linear(rs, a, r_0, c, b, r_1):  # 5  parameters
-    x = a*(rs - r_0)**-1 + c + b*(rs - r_1) # 1/r function + linear function
+    x = a*(rs - r_0)**-1 + c + b*(rs - r_1)  # 1/r function + linear function
     return x
 
+
 def func_U_linear_fixed(rs, a, r_0, b, r_1):  # 4  parameters
-    x = a*(rs - r_0)**-1 + 0.50 + b*(rs - r_1)**-2 # 1/r function + linear function
+    x = a*(rs - r_0)**-1 + 0.50 + b*(rs - r_1)**-2  # 1/r function + linear function
     return x
+
 
 def unpack_constant(rs, i, params):
     c = params[0]
     return constant(rs, c)
+
 
 def unpack_exponential(rs, i, params):
     a = params[0]
@@ -67,11 +81,13 @@ def unpack_exponential(rs, i, params):
     c = params[3]
     return  exponential(rs, a, d, r_0, c)
 
+
 def unpack_sigmoid(rs, i, params):
     C = params[0]
     d = params[1]
     r_0 = params[2]
     return sigmoid(rs, C, d, r_0)
+
 
 def unpack_polynomial3(rs, i, params):
     a = params[0]
@@ -80,6 +96,7 @@ def unpack_polynomial3(rs, i, params):
     d = params[3]
     return polynomial3(rs, a, b, c, d)
 
+
 def unpack_polynomial4(rs, i, params):
     a = params[0]
     b = params[1]
@@ -87,6 +104,7 @@ def unpack_polynomial4(rs, i, params):
     d = params[3]
     e = params[4]
     return polynomial4(rs, a, b, c, d, e)
+
 
 def unpack_polynomial5(rs, i, params):
     a = params[0]
@@ -97,10 +115,12 @@ def unpack_polynomial5(rs, i, params):
     f = params[5]
     return polynomial5(rs, a, b, c, d, e, f)
 
+
 def unpack_func_E0(rs, i, params):
     d = params[0]
     r_0 = params[1]
     return func_E0(rs, d, r_0)
+
 
 def unpack_func_t(rs, i, params):
     C = params[0]
@@ -108,11 +128,13 @@ def unpack_func_t(rs, i, params):
     r_0 = params[2]
     return func_t(rs, C, d, r_0)
 
+
 def unpack_func_U(rs, i, params):
     a = params[0]
     r_0 = params[1]
     c = params[2]
     return func_U(rs, a, r_0, c)
+
 
 def unpack_func_U_linear(rs, i, params):
     a = params[0]
@@ -122,6 +144,7 @@ def unpack_func_U_linear(rs, i, params):
     r_1 = params[4]
     return func_U_linear(rs, a, r_0, c, b, r_1)
 
+
 def unpack_func_U_linear_fixed(rs, i, params):
     a = params[0]
     r_0 = params[1]
@@ -129,37 +152,40 @@ def unpack_func_U_linear_fixed(rs, i, params):
     r_1 = params[3]
     return func_U_linear_fixed(rs, a, r_0, b, r_1)
 
+
 def unpack_independent(rs, i, params):
     return params[i]
 
+
 function_dict = {
-    'constant' : constant,
-    'func_E0' : func_E0,
-    'func_t' : func_t,
-    'func_U' : func_U,
-    'func_U_linear' : func_U_linear,
-    'func_U_linear_fixed' : func_U_linear_fixed,
-    'exponential' : exponential,
-    'sigmoid' : sigmoid,
-    'polynomial3' : polynomial3,
-    'polynomial4' : polynomial4,
-    'polynomial5' : polynomial5,
+    'constant': constant,
+    'func_E0': func_E0,
+    'func_t': func_t,
+    'func_U': func_U,
+    'func_U_linear': func_U_linear,
+    'func_U_linear_fixed': func_U_linear_fixed,
+    'exponential': exponential,
+    'sigmoid': sigmoid,
+    'polynomial3': polynomial3,
+    'polynomial4': polynomial4,
+    'polynomial5': polynomial5,
 }
 
 unpack_func_dict = {
-    'constant' : unpack_constant,
-    'func_E0' : unpack_func_E0,
-    'func_t' : unpack_func_t,
-    'func_U' : unpack_func_U,
-    'func_U_linear' : unpack_func_U_linear,
-    'func_U_linear_fixed' : unpack_func_U_linear_fixed,
-    'exponential' : unpack_exponential,
-    'sigmoid' : unpack_sigmoid,
-    'polynomial3' : unpack_polynomial3,
-    'polynomial4' : unpack_polynomial4,
-    'polynomial5' : unpack_polynomial5,
-    'independent' : unpack_independent,
+    'constant': unpack_constant,
+    'func_E0': unpack_func_E0,
+    'func_t': unpack_func_t,
+    'func_U': unpack_func_U,
+    'func_U_linear': unpack_func_U_linear,
+    'func_U_linear_fixed': unpack_func_U_linear_fixed,
+    'exponential': unpack_exponential,
+    'sigmoid': unpack_sigmoid,
+    'polynomial3': unpack_polynomial3,
+    'polynomial4': unpack_polynomial4,
+    'polynomial5': unpack_polynomial5,
+    'independent': unpack_independent,
 }
+
 
 def descriptor_distance(
     ai_df: pd.DataFrame, model_descriptors: dict, matches: list[str], norm
@@ -278,10 +304,10 @@ def evaluate_loss(
 
     params = pd.Series(params, index=keys)
 
-    N = onebody[keys[0]].shape[0] # The first key is a onebody key
+    N = onebody[keys[0]].shape[0]  # The first key is a onebody key
 
     descriptors, fcivec = solver.solve_effective_hamiltonian(
-        onebody, twobody, params, nroots=nroots, norb=N, nelec=(N//2,N//2), ci0=fcivec
+        onebody, twobody, params, nroots=nroots, norb=N, nelec=(N // 2, N // 2), ci0=fcivec
     )
     cache[f"fcivec_{r}"] = fcivec
 
@@ -321,7 +347,7 @@ def evaluate_loss(
         "norm": norm,
         'energy_loss': energy_loss,
         "loss": loss,
-        "sloss": np.mean(dist_energy[dloss_row_inds, dloss_col_inds])*norm['energy'],
+        "sloss": np.mean(dist_energy[dloss_row_inds, dloss_col_inds]) * norm['energy'],
         "dloss": np.mean(dist_des[dloss_row_inds, dloss_col_inds]),
         "penalty": np.sum(np.tile(penalty, (npenalty, 1))[:, penalty_col_inds]),
         "descriptors": descriptors,
@@ -331,6 +357,7 @@ def evaluate_loss(
         "params": params,
         'Spectrum RMSE': spectrum_RMSE,
     }
+
 
 def evaluate_loss_para_function(
     x0,
@@ -361,20 +388,20 @@ def evaluate_loss_para_function(
 
         params = []
         for j, param in enumerate(keys):
-            params.append(unpack_func_dict[param_functions[j]](r, i, x0[x0_ind[j] : x0_ind[j+1]]))
+            params.append(unpack_func_dict[param_functions[j]](r, i, x0[x0_ind[j]: x0_ind[j + 1]]))
 
         losses[f'r{r}'] = evaluate_loss(params,
-                                           keys,
-                                           weights,
-                                           onebody,
-                                           twobody,
-                                           ai_df_rs[f'r{r}'],
-                                           max_ai_energy_rs[f'r{r}'],
-                                           nroots,
-                                           matches,
-                                           None,
-                                           norm_rs[f'r{r}'],
-                                           r)
+                                        keys,
+                                        weights,
+                                        onebody,
+                                        twobody,
+                                        ai_df_rs[f'r{r}'],
+                                        max_ai_energy_rs[f'r{r}'],
+                                        nroots,
+                                        matches,
+                                        None,
+                                        norm_rs[f'r{r}'],
+                                        r)
         sum_loss += losses[f'r{r}']["loss"]
         sum_spec_rmse += losses[f'r{r}']["Spectrum RMSE"]
 
@@ -386,6 +413,7 @@ def evaluate_loss_para_function(
     #print(sum_loss)
 
     return losses
+
 
 # maps for train states first, then maps the rest of the model states to validation states.
 def CV_evaluate_loss(
@@ -416,7 +444,7 @@ def CV_evaluate_loss(
     N = onebody[keys[0]].shape[0]
 
     descriptors, fcivec = solver.solve_effective_hamiltonian(
-        onebody, twobody, params, nroots=nroots, norb=N, nelec=(N//2,N//2), ci0=None
+        onebody, twobody, params, nroots=nroots, norb=N, nelec=(N // 2, N // 2), ci0=None
     )
     cache[f"fcivec_{r}"] = fcivec
 
@@ -474,7 +502,7 @@ def CV_evaluate_loss(
         "train_loss": loss / 2,  # train loss
         "val_loss": val_loss / 3,
         "norm": norm,
-        "train_sloss": np.sum(dist_energy[train_row_inds, train_col_inds])*norm['energy']/ntrain,
+        "train_sloss": np.sum(dist_energy[train_row_inds, train_col_inds]) * norm['energy'] / ntrain,
         "train_dloss": np.sum(dist_des[train_row_inds, train_col_inds]),
         "val_sloss": np.sum(dist_energy[val_row_inds, val_col_inds]),
         "val_dloss": np.sum(dist_des[val_row_inds, val_col_inds]),
@@ -486,12 +514,13 @@ def CV_evaluate_loss(
         "params": params,
         'val_rows': np.array(val_states)[rows],
         'val_cols': x[cols],
-        'Energy val rms error (eV)':27.2114*better_val_loss,
+        'Energy val rms error (eV)': 27.2114 * better_val_loss,
         'val loss': better_val_loss,
         'energy_loss': energy_loss,
         'Spectrum RMSE Train': spectrum_RMSE_train,
         'Spectrum RMSE Val States': spectrum_RMSE_val,
-        'Spectrum RMSE Val': spectrum_RMSE_trainval,}
+        'Spectrum RMSE Val': spectrum_RMSE_trainval
+        }
 
 
 def optimize_function(*args, **kwargs):
@@ -528,12 +557,12 @@ def evaluate_loss_CV_para_function(
     sum_spec_rmse_train = 0
     sum_spec_rmse_val = 0
 
-    for i,r in enumerate(rs):
+    for i, r in enumerate(rs):
 
         #print(r)
         params = []
         for j, param in enumerate(keys):
-            params.append(unpack_func_dict[param_functions[j]](r, i, x0[x0_ind[j] : x0_ind[j+1]]))
+            params.append(unpack_func_dict[param_functions[j]](r, i, x0[x0_ind[j]: x0_ind[j + 1]]))
 
         losses[f'r{r}'] = CV_evaluate_loss(params,
                                            keys,
@@ -586,8 +615,8 @@ def setup_train(
     clip_val=1,
     niter_opt=1000,
     tol_opt=1e-7,
-    maxfev_opt=10000, 
-):  
+    maxfev_opt=10000,
+):
     ai_df_train_rs = {}
     max_ai_energy_rs = {}
 
@@ -608,7 +637,7 @@ def setup_train(
 
     dmd_train_rs_params = np.zeros((len(onebody_params + twobody_params), len(train_rs)))
     print("dmd_train_rs_params shape: ", dmd_train_rs_params.shape)
-    E0_ind = onebody_params.index('trace')
+    E0_ind = 0  # onebody_params.index('trace') Can do explict call or make sure the first onebody is the energy offset
 
     for i, r in enumerate(train_rs):
         ai_df = ai_df_rs[f'r{r}']
@@ -618,9 +647,9 @@ def setup_train(
             if j == E0_ind:
                 continue
             dmd_train_rs_params[j][i] = dmd.params[param]
-            fitted_ground_state_energy += dmd.params[param]*ai_df[param][0]
+            fitted_ground_state_energy += dmd.params[param] * ai_df[param][0]
 
-        dmd_train_rs_params[E0_ind][i] = ( ai_df["energy"][0] - fitted_ground_state_energy) / 4 # 4 is the number of sites ; make generic
+        dmd_train_rs_params[E0_ind][i] = (ai_df["energy"][0] - fitted_ground_state_energy) / onebody[onebody_params[0]].shape[0]  # divide by number the number of sites ; make generic
 
     print("DMD parameters for train_rs: ", onebody_params + twobody_params)
     print(dmd_train_rs_params)
@@ -634,11 +663,11 @@ def setup_train(
     for j, param in enumerate(onebody_params + twobody_params):
         if param_functions[j] == 'independent':
             x0.append(dmd_train_rs_params[j])
-            x0_ind.append( len(dmd_train_rs_params[j]) + x0_ind[j])
+            x0_ind.append(len(dmd_train_rs_params[j]) + x0_ind[j])
         else:
             try:
                 popt, pcov = curve_fit(function_dict[param_functions[j]], train_rs, dmd_train_rs_params[j])
-            except:
+            except:  # TODO: Replace with better conditional
                 sig = signature(function_dict[param_functions[j]])
                 popt = np.zeros(len(sig.parameters) - 1)
             print(f"{param} : {popt}")
@@ -653,7 +682,7 @@ def setup_train(
 
     for r in (train_rs):
         ai_df = ai_df_rs[f'r{r}']
-        ai_df_floats = ai_df.select_dtypes(include=[np.float64]) # Make sure no columns with non floats get included
+        ai_df_floats = ai_df.select_dtypes(include=[np.float64])  # Make sure no columns with non floats get included
         ai_var = np.var(ai_df_floats, axis=0)
         #print("Before clipping:\n", ai_var)
         des_var = ai_var.loc[ai_var.index != 'energy']
@@ -700,21 +729,21 @@ def setup_train(
 
     print("Evaluate train data after optimization:")
     data = evaluate_loss_CV_para_function(xmin.x,
-                                     x0_ind,
-                                     param_functions,
-                                     train_rs,
-                                     keys,
-                                     weights,
-                                     onebody,
-                                     twobody,
-                                     ai_df_rs,
-                                     max_ai_energy_rs,
-                                     nroots,
-                                     matches,
-                                     None,
-                                     norm_rs,
-                                     train_states_rs,
-                                     val_states_rs)
+                                          x0_ind,
+                                          param_functions,
+                                          train_rs,
+                                          keys,
+                                          weights,
+                                          onebody,
+                                          twobody,
+                                          ai_df_rs,
+                                          max_ai_energy_rs,
+                                          nroots,
+                                          matches,
+                                          None,
+                                          norm_rs,
+                                          train_states_rs,
+                                          val_states_rs)
 
     with h5py.File(outfile, "w") as f:
         f["train_rs"] = train_rs
@@ -752,6 +781,7 @@ def setup_train(
                 else:
                     f[f"r{r}/" + k] = data_r[k]
 
+
 def inference(
     onebody: dict,
     twobody: dict,
@@ -762,10 +792,10 @@ def inference(
     nroots: int,
     outfile: str,
     matches: list,
-    rs : list,
+    rs: list,
     params_dict: dict[str, list],
     clip_val=1,
-):  
+):
     max_ai_energy_rs = {}
     norm_rs = {}
     natoms = onebody[matches[0]].shape[0]
@@ -774,7 +804,7 @@ def inference(
         ai_df = ai_df_rs[f'r{r}']
         max_ai_energy_rs[f'r{r}'] = np.max(ai_df["energy"])
 
-        ai_df_floats = ai_df.select_dtypes(include=[np.float64]) # Make sure no columns with non floats get included
+        ai_df_floats = ai_df.select_dtypes(include=[np.float64])  # Make sure no columns with non floats get included
         ai_var = np.var(ai_df_floats, axis=0)
         #print("Before clipping:\n", ai_var)
         des_var = ai_var.loc[ai_var.index != 'energy']
@@ -788,23 +818,23 @@ def inference(
     print(f"Evaluating Inference natoms {natoms}")
 
     for r in rs:
-        data[f'r{r}'] =  evaluate_loss(params_dict[f'r{r}'],
-                                    matches,
-                                    [1.0, 0.0],
-                                    onebody,
-                                    twobody,
-                                    ai_df_rs[f'r{r}'],
-                                    max_ai_energy_rs[f'r{r}'],
-                                    nroots,
-                                    matches,
-                                    None,
-                                    norm_rs[f'r{r}'],
-                                    r)
+        data[f'r{r}'] = evaluate_loss(params_dict[f'r{r}'],
+                                      matches,
+                                      [1.0, 0.0],
+                                      onebody,
+                                      twobody,
+                                      ai_df_rs[f'r{r}'],
+                                      max_ai_energy_rs[f'r{r}'],
+                                      nroots,
+                                      matches,
+                                      None,
+                                      norm_rs[f'r{r}'],
+                                      r)
 
     with h5py.File(outfile, "a") as f:
         inf_str = f"inference_{inference_name}/"
-        f[inf_str+f"rs"] = rs
-        f[inf_str+f"natoms"] = natoms
+        f[inf_str + "rs"] = rs
+        f[inf_str + "natoms"] = natoms
 
         for r in rs:
             data_r = data[f"r{r}"]
@@ -812,9 +842,9 @@ def inference(
             for k in data_r:
                 if k == "descriptors":
                     for kk in data_r[k]:
-                        f[inf_str+f"r{r}/" + "test/" + k + "/" + kk] = data_r[k][kk]
+                        f[inf_str + f"r{r}/" + "test/" + k + "/" + kk] = data_r[k][kk]
                 elif k == "params":
                     for kk in onebody_params + twobody_params:
-                        f[inf_str+f"r{r}/" + "rdmd_params/" + kk] = data_r[k][kk]
+                        f[inf_str + f"r{r}/" + "rdmd_params/" + kk] = data_r[k][kk]
                 else:
-                    f[inf_str+f"r{r}/" + k] = data_r[k]
+                    f[inf_str + f"r{r}/" + k] = data_r[k]

@@ -462,7 +462,7 @@ def CV_evaluate_loss(
     row_ind, col_ind = linear_sum_assignment(distance_train)
     #print("loss before reindexing", np.sum(distance_train[row_ind, col_ind]))
     for p in np.sort(val_states):  # Reindexing row so that it is used on distance matrix
-        ind = np.where(row_ind == p)[0][0]
+        ind = np.where(np.arange(0, len(ai_df)) == p)[0][0]
         for i in range(ind, len(row_ind)):
             row_ind[i] += 1
 

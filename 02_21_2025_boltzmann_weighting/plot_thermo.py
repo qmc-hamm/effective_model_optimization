@@ -229,7 +229,7 @@ def thermo_from_df(ai_energies:np.array, m_energies:np.array):
 
 def gather_thermo_data(ai_energies:np.array, model_energies:pd.DataFrame):
 
-    print(model_energies)
+    #print(model_energies)
 
     T = np.linspace(0.1, 100, 1000)
 
@@ -247,7 +247,7 @@ def gather_thermo_data(ai_energies:np.array, model_energies:pd.DataFrame):
 
     thermo_data = []
 
-    print("saving dict data")
+    #print("saving dict data")
     for i in range(len(S_ai)):
         thermo = {}
         thermo['T (eV)'] = T[i]
@@ -259,7 +259,7 @@ def gather_thermo_data(ai_energies:np.array, model_energies:pd.DataFrame):
         thermo['C'] = C_ai[i]
         thermo['T for C (eV)'] = T_avg[i]
         thermo_data.append(thermo)
-    print("end of saving dict data")
+    #print("end of saving dict data")
 
     model_numbers = np.unique(model_energies['model number'])
 
@@ -295,7 +295,7 @@ def plot_thermo(dirname: str, fnames: list[str], inference_names: list[str], abi
     r = 3.0
     Tfit = 10 #eV
 
-    print("file names", fnames)
+    #print("file names", fnames)
 
     if not os.path.exists("plots"):
         os.makedirs("plots")
@@ -315,7 +315,7 @@ def plot_thermo(dirname: str, fnames: list[str], inference_names: list[str], abi
         mlflow.log_artifact("plots/thermo_df.csv")
 
         sns.lineplot(data=thermo_df[thermo_df["method"]=="ab initio"], x='T (eV)', y='S', hue='method')
-        sns.lineplot(data=thermo_df[thermo_df["method"]=="model"], x='T (eV)', y='S', hue='model number', palette="Oranges")
+        sns.lineplot(data=thermo_df[thermo_df["method"]=="model"], x='T (eV)', y='S', hue='model number', palette="dark:salmon")
         plt.xlabel("Temperature (eV)")
         plt.ylabel("Entropy")
         plt.xlim(0, 10)
@@ -325,7 +325,7 @@ def plot_thermo(dirname: str, fnames: list[str], inference_names: list[str], abi
 
         #sns.lineplot(data=thermo_df, x='T (eV)', y='U', hue='method')
         sns.lineplot(data=thermo_df[thermo_df["method"]=="ab initio"], x='T (eV)', y='U', hue='method')
-        sns.lineplot(data=thermo_df[thermo_df["method"]=="model"], x='T (eV)', y='U', hue='model number', palette="Oranges")
+        sns.lineplot(data=thermo_df[thermo_df["method"]=="model"], x='T (eV)', y='U', hue='model number', palette="dark:salmon")
         plt.xlabel("Temperature (eV)")
         plt.ylabel("Potential Energy (eV)")
         plt.xlim(0, 10)
@@ -335,7 +335,7 @@ def plot_thermo(dirname: str, fnames: list[str], inference_names: list[str], abi
 
         #sns.lineplot(data=thermo_df, x='T for C (eV)', y='C', hue='method')
         sns.lineplot(data=thermo_df[thermo_df["method"]=="ab initio"], x='T for C (eV)', y='C', hue='method')
-        sns.lineplot(data=thermo_df[thermo_df["method"]=="model"], x='T for C (eV)', y='C', hue='model number', palette="Oranges")
+        sns.lineplot(data=thermo_df[thermo_df["method"]=="model"], x='T for C (eV)', y='C', hue='model number', palette="dark:salmon")
         plt.xlabel("Temperature (eV)")
         plt.ylabel("Heat Capacity")
         plt.xlim(0, 10)

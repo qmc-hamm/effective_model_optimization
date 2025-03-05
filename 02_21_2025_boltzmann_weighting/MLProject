@@ -24,7 +24,7 @@ entry_points:
         niter_opt: {type: float, default: 10000}
         tol_opt: {type: float, default: 1e-9}
         maxfev_opt: {type: float, default: 1e7}
-        nCV_iter: {type: float, default: 5}
+        nCV_iter: {type: float, default: 10}
 
     command: "python boltzmann_exploration.py \
               --state_cutoff {state_cutoff} \

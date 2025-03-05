@@ -238,7 +238,7 @@ if __name__ == "__main__":
     parser.add_argument("--niter_opt", type=int)
     parser.add_argument("--tol_opt", type=float)
     parser.add_argument("--nCV_iter", type=int, default=1)
-    parser.add_argument("--maxfev_opt", type=int, default=1000)
+    parser.add_argument("--maxfev_opt", type=float, default=1000)
     parser.add_argument("--parameter_functions", type=str, nargs="+")
 
     args = parser.parse_args()

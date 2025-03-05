@@ -1,0 +1,27 @@
+Physical setup: n, r
+
+Training variables: 
+* Fit temperature Tf
+* Lij function variables (w0, whether intruders are penalized)
+* n -- number of atoms
+* r -- distance
+
+models(Tf, w0, penal, n, r)
+
+Evaluation of below is U(T), S(T), Delta (gap between ground and 1st excited state)
+
+One question: is this a better way to fit models for a fixed n,r?
+1) U_ai(T,6,r) - U_model(Tf, w0, penal, 4,r)(T) -- what are the optimal choices of Tf, w0, penal? --> Justify your loss function. 
+
+Another question: Can we make predictive models? Train on some values of n, r, and predict on different values of n,r
+    2) Fixed r, varying n. 
+        U_ai(T, 6, r) - U_{model(Tf, w0, penal, 4,r)} (T, 6, r)
+    3) Fixed n, varying r
+        U_ai(T, 4, r) - U_{model(Tf, w0, penal, 4,{r})} (T, 4, r)
+    4) Later -- varying n, r
+        U_ai(T, n, r) - U_{model(Tf, w0, penal, 4, {r})} (T, n, r)
+
+First go: 
+Train a model on 4,3.0, evaluate 1) and 2). Scan Tf, then scan w0, then change penalty or not. Randomize initial guess.
+
+Then 

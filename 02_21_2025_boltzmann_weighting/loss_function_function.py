@@ -802,6 +802,7 @@ def setup_train(
         f["para_w_0"] = weights[0]
         f["para_w_1"] = weights[1]
         f["beta"] = beta
+        f["isPenaltyOn"] = penaltyOn
         f["loss"] = xmin.fun
         f["params"] = onebody_params + twobody_params
         f["params functions"] = param_functions

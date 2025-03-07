@@ -18,6 +18,7 @@ entry_points:
         parameter_function0: {type: string, default: "independent"}
         parameter_function1: {type: string, default: "independent,independent"}
         temp: {type: float, default: 0.0}
+        penaltyOn: {type: bool, default: True}
 
         # These parameters can be used to make quick training
         # runs for debugging purposes.
@@ -36,7 +37,8 @@ entry_points:
               --maxfev_opt {maxfev_opt} \
               --nCV_iter {nCV_iter} \
               --parameters {parameter0} {parameter1} \
-              --parameter_functions {parameter_function0} {parameter_function1}"
+              --parameter_functions {parameter_function0} {parameter_function1}
+              --penaltyOn {penaltyOn}"
   scan:
     # Run a scan over a parameter space. Launches multiple cross-validation
     # training steps in parallel using the MLFlow main entry point above.

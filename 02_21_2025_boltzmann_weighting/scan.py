@@ -43,9 +43,12 @@ w0s = [
 ]
 
 temps = [
-         0.0, 10.0
+         10.0
          ]
 
+penaltyOns =[
+    True#, False
+]
 
 def prepare_mlflow_params(
         state_cutoff: Optional[float] = None,
@@ -60,6 +63,7 @@ def prepare_mlflow_params(
         nCV_iter: Optional[float] = None,
         parameter_function0: Optional[List[str]] = None,
         parameter_function1: Optional[List[str]] = None,
+        penaltyOn: Optional[bool] = None,
 ) -> Dict[str, Union[str, bool]]:
     """
     Prepare parameters for Cross Validation training run.
@@ -77,6 +81,7 @@ def prepare_mlflow_params(
         nCV_iter: Number of cross-validation iterations
         parameter_function0: First parameter function name string
         parameter_function1: Second parameter function name string
+        penaltyOn: Is the penalty part of the function on
 
     Returns:
         Dictionary with MLflow run configuration parameters. The dict will
@@ -101,6 +106,8 @@ def prepare_mlflow_params(
         params["parameter_function0"] = ",".join(parameter_function0)
     if parameter_function1 is not None:
         params["parameter_function1"] = ",".join(parameter_function1)
+    if penaltyOn is not None:
+        params["penaltyOn"] = str(penaltyOn)
     if niter_opt is not None:
         params["niter_opt"] = str(niter_opt)
     if tol_opt is not None:
@@ -165,12 +172,13 @@ with mlflow.start_run(run_id=provided_run_id) as run:
     jobs = []
 
     # Hyperparameter sweep step
-    for parameters, parameter_function_dict, train_rs, state_cutoff, w0, temp in itertools.product(parameter_sets,
+    for parameters, parameter_function_dict, train_rs, state_cutoff, w0, temp, penaltyOn in itertools.product(parameter_sets,
                                                                                              param_function_sets,
                                                                                              rs_set,
                                                                                              state_cutoffs,
                                                                                              w0s,
-                                                                                             temps):
+                                                                                             temps,
+                                                                                             penaltyOns):
  
         param_functions = [[],[]]
         for param in parameters[0]:
@@ -186,7 +194,8 @@ with mlflow.start_run(run_id=provided_run_id) as run:
             train_rs=train_rs,
             state_cutoff=state_cutoff,
             w0=w0,
-            temp=temp
+            temp=temp,
+            penaltyOn=penaltyOn,
         )
 
         jobs.append(run_train(

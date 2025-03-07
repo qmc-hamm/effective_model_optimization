@@ -150,11 +150,11 @@ def make_name(parameters):
     return "_".join(parameters[0]) + "_" + "_".join(parameters[1])
 
 
-def main(parameters, state_cutoff, w0, temp, train_rs, niter_opt, tol_opt, maxfev_opt, nCV_iter, param_functions):
-    if temp != 0.0:
+def main(parameters, state_cutoff, w0, temp, train_rs, niter_opt, tol_opt, maxfev_opt, nCV_iter, param_functions, penaltyOn):
+    if temp > 0.0:
         beta = 1/temp
     else:
-        beta = 0
+        print("Invalid temperature")
     with mlflow.start_run():
         # Write model and plots to temp dir
         with tempfile.TemporaryDirectory() as output_dir:
@@ -178,7 +178,7 @@ def main(parameters, state_cutoff, w0, temp, train_rs, niter_opt, tol_opt, maxfe
                       beta=beta,
                       p=0, # Set to 0, no CV for now
                       state_cutoff=state_cutoff,  #state_cutoff,
-                      penaltyOn=True,
+                      penaltyOn=penaltyOn,
                       niter_opt=niter_opt,
                       tol_opt=tol_opt,
                       maxfev_opt=maxfev_opt
@@ -194,7 +194,7 @@ def main(parameters, state_cutoff, w0, temp, train_rs, niter_opt, tol_opt, maxfe
                              rs=train_rs,
                              beta=beta,
                              state_cutoff=state_cutoff,  #state_cutoff,
-                             penaltyOn=True, #False or True
+                             penaltyOn=penaltyOn, #False or True
                              )
 
                 """ runInference(named_terms="hchain8_named_operators.hdf5",
@@ -226,8 +226,9 @@ def main(parameters, state_cutoff, w0, temp, train_rs, niter_opt, tol_opt, maxfe
 
 
 if __name__ == "__main__":
-    #temp = 0 # eV or T*kb
-    #main((['trace', 't_1'], ['doccp']), None, 1.0, temp, [3.0], 1, 1, 1, 3, ['independent', 'independent', 'independent'])
+    #temp = 5 #1000 # eV or T*kb
+    #penaltyOn = True
+    #main((['trace', 't_1'], ['doccp']), None, 1.0, temp, [3.0], 100, .1, 100000, 3, ['independent', 'independent', 'independent'], penaltyOn)
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--parameters", type=str, nargs="+")
@@ -240,6 +241,7 @@ if __name__ == "__main__":
     parser.add_argument("--nCV_iter", type=int, default=1)
     parser.add_argument("--maxfev_opt", type=float, default=1000)
     parser.add_argument("--parameter_functions", type=str, nargs="+")
+    parser.add_argument("--penaltyOn", type=bool)
 
     args = parser.parse_args()
 
@@ -256,5 +258,6 @@ if __name__ == "__main__":
     nCV_iter = args.nCV_iter
     maxfev_opt = args.maxfev_opt
     param_functions = args.parameter_functions[0].split(',') + args.parameter_functions[1].split(',')
+    penaltyOn = args.penaltyOn
 
-    main(parameters, state_cutoff, w0, temp, train_rs, niter_opt, tol_opt, maxfev_opt, nCV_iter, param_functions)
+    main(parameters, state_cutoff, w0, temp, train_rs, niter_opt, tol_opt, maxfev_opt, nCV_iter, param_functions, penaltyOn)

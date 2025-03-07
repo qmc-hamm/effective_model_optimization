@@ -27,3 +27,8 @@ Train a model on 4,3.0, evaluate 1) and 2). Scan Tf, then scan w0, then change p
 Then 
 
 
+
+__Show Problem__
+Naive model solving:
+w0 = 1 Tf = 0 , state cutoff = None
+

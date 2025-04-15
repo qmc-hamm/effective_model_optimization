@@ -150,11 +150,7 @@ def make_name(parameters):
     return "_".join(parameters[0]) + "_" + "_".join(parameters[1])
 
 
-def main(parameters, state_cutoff, w0, temp, train_rs, niter_opt, tol_opt, maxfev_opt, nCV_iter, param_functions, penaltyOn):
-    if temp > 0.0:
-        beta = 1/temp
-    else:
-        print("Invalid temperature")
+def main(parameters, state_cutoff, w0, beta, train_rs, niter_opt, tol_opt, maxfev_opt, nCV_iter, param_functions, penaltyOn):
     with mlflow.start_run():
         # Write model and plots to temp dir
         with tempfile.TemporaryDirectory() as output_dir:
@@ -235,13 +231,13 @@ if __name__ == "__main__":
     parser.add_argument("--train_rs", type=str)
     parser.add_argument("--state_cutoff")
     parser.add_argument("--w0", type=float)
-    parser.add_argument("--temp", type=float)
+    parser.add_argument("--beta", type=float)
+    parser.add_argument("--penalty_state", type=str) # Argparse does not support booleans...
     parser.add_argument("--niter_opt", type=int)
     parser.add_argument("--tol_opt", type=float)
     parser.add_argument("--nCV_iter", type=int, default=1)
     parser.add_argument("--maxfev_opt", type=float, default=1000)
     parser.add_argument("--parameter_functions", type=str, nargs="+")
-    parser.add_argument("--penaltyOn", type=bool)
 
     args = parser.parse_args()
 
@@ -251,13 +247,13 @@ if __name__ == "__main__":
     else:
         state_cutoff = int(args.state_cutoff)
     w0 = args.w0
-    temp = args.temp
+    beta = args.beta
     train_rs = [float(r) for r in args.train_rs.split(",")]
     niter_opt = args.niter_opt
     tol_opt = args.tol_opt
     nCV_iter = args.nCV_iter
     maxfev_opt = args.maxfev_opt
     param_functions = args.parameter_functions[0].split(',') + args.parameter_functions[1].split(',')
-    penaltyOn = args.penaltyOn
+    penalty_state = bool(args.penalty_state)
 
-    main(parameters, state_cutoff, w0, temp, train_rs, niter_opt, tol_opt, maxfev_opt, nCV_iter, param_functions, penaltyOn)
+    main(parameters, state_cutoff, w0, beta, train_rs, niter_opt, tol_opt, maxfev_opt, nCV_iter, param_functions, penalty_state)

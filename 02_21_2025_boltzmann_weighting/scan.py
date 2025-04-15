@@ -42,8 +42,8 @@ w0s = [
     0.8  # Test Workflow
 ]
 
-temps = [
-         10.0
+betas = [
+         0.0
          ]
 
 penaltyOns =[
@@ -54,7 +54,7 @@ def prepare_mlflow_params(
         state_cutoff: Optional[float] = None,
         train_rs: Optional[List[float]] = None,
         w0: Optional[float] = None,
-        temp: Optional[float] = None,
+        beta: Optional[float] = None,
         parameter0: Optional[List[str]] = None,
         parameter1: Optional[List[str]] = None,
         niter_opt: Optional[float] = None,
@@ -72,7 +72,7 @@ def prepare_mlflow_params(
         state_cutoff: Cutoff state value
         train_rs: Comma-separated string of values
         w0: Initial weight value
-        temp: Sets Boltzmann Weights
+        beta: Sets Boltzmann Weights
         parameter0: First parameter string
         parameter1: Second parameter string
         niter_opt: Number of optimization iterations
@@ -96,8 +96,8 @@ def prepare_mlflow_params(
         params["train_rs"] = ",".join([str(r) for r in train_rs])
     if w0 is not None:
         params["w0"] = str(w0)
-    if temp is not None:
-        params["temp"] = str(temp)
+    if beta is not None:
+        params["beta"] = str(beta)
     if parameter0 is not None:
         params["parameter0"] = ",".join(parameter0)
     if parameter1 is not None:
@@ -106,8 +106,8 @@ def prepare_mlflow_params(
         params["parameter_function0"] = ",".join(parameter_function0)
     if parameter_function1 is not None:
         params["parameter_function1"] = ",".join(parameter_function1)
-    if penaltyOn is not None:
-        params["penaltyOn"] = str(penaltyOn)
+    if penalty_state is not None:
+        params["penalty_state"] = str(penalty_state)
     if niter_opt is not None:
         params["niter_opt"] = str(niter_opt)
     if tol_opt is not None:
@@ -172,12 +172,12 @@ with mlflow.start_run(run_id=provided_run_id) as run:
     jobs = []
 
     # Hyperparameter sweep step
-    for parameters, parameter_function_dict, train_rs, state_cutoff, w0, temp, penaltyOn in itertools.product(parameter_sets,
+    for parameters, parameter_function_dict, train_rs, state_cutoff, w0, beta, penalty_state in itertools.product(parameter_sets,
                                                                                              param_function_sets,
                                                                                              rs_set,
                                                                                              state_cutoffs,
                                                                                              w0s,
-                                                                                             temps,
+                                                                                             betas,
                                                                                              penaltyOns):
  
         param_functions = [[],[]]
@@ -194,8 +194,8 @@ with mlflow.start_run(run_id=provided_run_id) as run:
             train_rs=train_rs,
             state_cutoff=state_cutoff,
             w0=w0,
-            temp=temp,
-            penaltyOn=penaltyOn,
+            beta=beta,
+            penalty_state=penalty_state,
         )
 
         jobs.append(run_train(

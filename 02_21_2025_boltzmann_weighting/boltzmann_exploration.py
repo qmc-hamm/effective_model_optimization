@@ -22,7 +22,7 @@ def runCV(named_terms,
           train_rs,
           param_functions,
           minimum_1s_occupation=3.7,
-          w0=1,
+          w=0.0,
           beta=0.0,
           p=1,
           guess_params=None,
@@ -58,7 +58,7 @@ def runCV(named_terms,
     #print(ai_df_rs)
 
     matches = onebody_params + twobody_params
-    weights = [w0, 1 - w0]
+    weights = [1 - w, w]
 
     loss_function.setup_train(
         onebody,
@@ -150,14 +150,14 @@ def make_name(parameters):
     return "_".join(parameters[0]) + "_" + "_".join(parameters[1])
 
 
-def main(parameters, state_cutoff, w0, beta, train_rs, niter_opt, tol_opt, maxfev_opt, nCV_iter, param_functions, lamb):
+def main(parameters, state_cutoff, w, beta, train_rs, niter_opt, tol_opt, maxfev_opt, nCV_iter, param_functions, lamb):
     with mlflow.start_run():
         # Write model and plots to temp dir
         with tempfile.TemporaryDirectory() as output_dir:
             model_files = []
             for i in range(nCV_iter):
                 pname = make_name(parameters)
-                dirname = os.path.join(output_dir, f"func_model_data_{state_cutoff}_{w0}")
+                dirname = os.path.join(output_dir, f"func_model_data_{state_cutoff}_{w}")
                 if not os.path.exists(dirname):
                     os.makedirs(dirname)
                 model_file_path = f"{dirname}/{pname}_{i}.hdf5"
@@ -170,7 +170,7 @@ def main(parameters, state_cutoff, w0, beta, train_rs, niter_opt, tol_opt, maxfe
                       twobody_params=parameters[1],
                       train_rs=train_rs,
                       param_functions=param_functions,
-                      w0=w0,
+                      w=w,
                       beta=beta,
                       p=0, # Set to 0, no CV for now
                       state_cutoff=state_cutoff,  #state_cutoff,
@@ -230,7 +230,7 @@ if __name__ == "__main__":
     parser.add_argument("--parameters", type=str, nargs="+")
     parser.add_argument("--train_rs", type=str)
     parser.add_argument("--state_cutoff")
-    parser.add_argument("--w0", type=float)
+    parser.add_argument("--w", type=float)
     parser.add_argument("--beta", type=float)
     parser.add_argument("--lamb", type=float)
     parser.add_argument("--niter_opt", type=int)
@@ -246,7 +246,7 @@ if __name__ == "__main__":
         state_cutoff = None
     else:
         state_cutoff = int(args.state_cutoff)
-    w0 = args.w0
+    w = args.w
     beta = args.beta
     lamb = args.lamb
     train_rs = [float(r) for r in args.train_rs.split(",")]
@@ -256,4 +256,4 @@ if __name__ == "__main__":
     maxfev_opt = args.maxfev_opt
     param_functions = args.parameter_functions[0].split(',') + args.parameter_functions[1].split(',')
 
-    main(parameters, state_cutoff, w0, beta, train_rs, niter_opt, tol_opt, maxfev_opt, nCV_iter, param_functions, lamb)
+    main(parameters, state_cutoff, w, beta, train_rs, niter_opt, tol_opt, maxfev_opt, nCV_iter, param_functions, lamb)

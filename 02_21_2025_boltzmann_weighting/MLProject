@@ -12,7 +12,7 @@ entry_points:
     parameters:
         state_cutoff: {type: float, default: None}
         train_rs: {type: str, default: "2.2, 2.8, 3.2, 3.6, 4.0, 4.4, 5.0"}
-        w0: {type: float, default: 0.9}
+        w: {type: float, default: 0.1}
         beta: {type: float, default: 0.0}
         lamb: {type: float, default: 1.0}
         parameter0: {type: string, default: "trace, t_1"}
@@ -30,7 +30,7 @@ entry_points:
     command: "python boltzmann_exploration.py \
               --state_cutoff {state_cutoff} \
               --train_rs {train_rs} \
-              --w0 {w0} \
+              --w {w} \
               --beta {beta} \
               --lamb {lamb} \
               --niter_opt {niter_opt} \

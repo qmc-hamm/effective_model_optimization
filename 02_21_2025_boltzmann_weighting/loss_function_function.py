@@ -769,10 +769,10 @@ def setup_train(
 
     with h5py.File(outfile, "w") as f:
         f["train_rs"] = train_rs
-        f["para_w_0"] = weights[0]
-        f["para_w_1"] = weights[1]
-        f["beta"] = beta
-        f["lambda penalty coefficient"] = lamb
+        f["Parameter: Spectral weight"] = weights[0]
+        f["Parameter: w, Physical descriptor weight"] = weights[1]
+        f["Parameter: beta, low-energy states weights"] = beta
+        f["Parameter: lambda, penalty weight"] = lamb
         f["loss"] = xmin.fun
         f["params"] = onebody_params + twobody_params
         f["params functions"] = param_functions

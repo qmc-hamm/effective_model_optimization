@@ -35,11 +35,11 @@ state_cutoffs = [
     None # Test Workflow
     #8, 10, 12, 14
 ]
-w0s = [
+ws = [
     #1.0, 0.9, 0.8, 0.7, 0.6
 #    1.0, 0.95, 0.9, 0.85, 0.8
 #    1.0, 0.9, 0.8, 0.7, 0.6
-    0.8  # Test Workflow
+    0.4  # Test Workflow
 ]
 
 betas = [
@@ -50,10 +50,11 @@ lambdas =[
     1.0
 ]
 
+
 def prepare_mlflow_params(
         state_cutoff: Optional[float] = None,
         train_rs: Optional[List[float]] = None,
-        w0: Optional[float] = None,
+        w: Optional[float] = None,
         beta: Optional[float] = None,
         lamb: Optional[float] = None,
         parameter0: Optional[List[str]] = None,
@@ -71,7 +72,7 @@ def prepare_mlflow_params(
     Args:
         state_cutoff: Cutoff state value
         train_rs: Comma-separated string of values
-        w0: Initial weight value
+        w: Weight value of physical descriptors in loss function
         beta: Sets Boltzmann Weights
         lamb: Weight in front of penalty term, default is 1.0
         parameter0: First parameter string
@@ -94,8 +95,8 @@ def prepare_mlflow_params(
         params["state_cutoff"] = str(state_cutoff)
     if train_rs is not None:
         params["train_rs"] = ",".join([str(r) for r in train_rs])
-    if w0 is not None:
-        params["w0"] = str(w0)
+    if w is not None:
+        params["w"] = str(w)
     if beta is not None:
         params["beta"] = str(beta)
     if lamb is not None:
@@ -172,11 +173,11 @@ with mlflow.start_run(run_id=provided_run_id) as run:
     jobs = []
 
     # Hyperparameter sweep step
-    for parameters, parameter_function_dict, train_rs, state_cutoff, w0, beta, lamb in itertools.product(parameter_sets,
+    for parameters, parameter_function_dict, train_rs, state_cutoff, w, beta, lamb in itertools.product(parameter_sets,
                                                                                              param_function_sets,
                                                                                              rs_set,
                                                                                              state_cutoffs,
-                                                                                             w0s,
+                                                                                             ws,
                                                                                              betas,
                                                                                              lambdas):
         param_functions = [[],[]]
@@ -192,7 +193,7 @@ with mlflow.start_run(run_id=provided_run_id) as run:
             parameter_function1=param_functions[1],
             train_rs=train_rs,
             state_cutoff=state_cutoff,
-            w0=w0,
+            w=w,
             beta=beta,
             lamb=lamb,
         )

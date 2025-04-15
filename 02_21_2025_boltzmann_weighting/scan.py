@@ -46,8 +46,8 @@ betas = [
          0.0
          ]
 
-penaltyOns =[
-    True#, False
+lambdas =[
+    1.0
 ]
 
 def prepare_mlflow_params(
@@ -55,6 +55,7 @@ def prepare_mlflow_params(
         train_rs: Optional[List[float]] = None,
         w0: Optional[float] = None,
         beta: Optional[float] = None,
+        lamb: Optional[float] = None,
         parameter0: Optional[List[str]] = None,
         parameter1: Optional[List[str]] = None,
         niter_opt: Optional[float] = None,
@@ -63,7 +64,6 @@ def prepare_mlflow_params(
         nCV_iter: Optional[float] = None,
         parameter_function0: Optional[List[str]] = None,
         parameter_function1: Optional[List[str]] = None,
-        penaltyOn: Optional[bool] = None,
 ) -> Dict[str, Union[str, bool]]:
     """
     Prepare parameters for Cross Validation training run.
@@ -73,6 +73,7 @@ def prepare_mlflow_params(
         train_rs: Comma-separated string of values
         w0: Initial weight value
         beta: Sets Boltzmann Weights
+        lamb: Weight in front of penalty term, default is 1.0
         parameter0: First parameter string
         parameter1: Second parameter string
         niter_opt: Number of optimization iterations
@@ -81,7 +82,6 @@ def prepare_mlflow_params(
         nCV_iter: Number of cross-validation iterations
         parameter_function0: First parameter function name string
         parameter_function1: Second parameter function name string
-        penaltyOn: Is the penalty part of the function on
 
     Returns:
         Dictionary with MLflow run configuration parameters. The dict will
@@ -98,6 +98,8 @@ def prepare_mlflow_params(
         params["w0"] = str(w0)
     if beta is not None:
         params["beta"] = str(beta)
+    if lamb is not None:
+        params["lamb"] = str(lamb)
     if parameter0 is not None:
         params["parameter0"] = ",".join(parameter0)
     if parameter1 is not None:
@@ -106,8 +108,6 @@ def prepare_mlflow_params(
         params["parameter_function0"] = ",".join(parameter_function0)
     if parameter_function1 is not None:
         params["parameter_function1"] = ",".join(parameter_function1)
-    if penalty_state is not None:
-        params["penalty_state"] = str(penalty_state)
     if niter_opt is not None:
         params["niter_opt"] = str(niter_opt)
     if tol_opt is not None:
@@ -172,14 +172,13 @@ with mlflow.start_run(run_id=provided_run_id) as run:
     jobs = []
 
     # Hyperparameter sweep step
-    for parameters, parameter_function_dict, train_rs, state_cutoff, w0, beta, penalty_state in itertools.product(parameter_sets,
+    for parameters, parameter_function_dict, train_rs, state_cutoff, w0, beta, lamb in itertools.product(parameter_sets,
                                                                                              param_function_sets,
                                                                                              rs_set,
                                                                                              state_cutoffs,
                                                                                              w0s,
                                                                                              betas,
-                                                                                             penaltyOns):
- 
+                                                                                             lambdas):
         param_functions = [[],[]]
         for param in parameters[0]:
             param_functions[0].append(parameter_function_dict[param])
@@ -195,7 +194,7 @@ with mlflow.start_run(run_id=provided_run_id) as run:
             state_cutoff=state_cutoff,
             w0=w0,
             beta=beta,
-            penalty_state=penalty_state,
+            lamb=lamb,
         )
 
         jobs.append(run_train(

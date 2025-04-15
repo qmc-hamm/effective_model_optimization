@@ -27,7 +27,7 @@ def runCV(named_terms,
           p=1,
           guess_params=None,
           state_cutoff=None,
-          penaltyOn=True,
+          lamb=1.0,
           niter_opt=2,
           tol_opt=1e-2,
           maxfev_opt=1000.0,
@@ -75,7 +75,7 @@ def runCV(named_terms,
         beta,
         p,
         guess_params,
-        penaltyOn=penaltyOn,
+        lamb=lamb,
         niter_opt=niter_opt,
         tol_opt=tol_opt,
         maxfev_opt=maxfev_opt,
@@ -93,7 +93,7 @@ def runInference(named_terms,
                  beta,
                  minimum_1s_occupation=3.7,
                  state_cutoff=None,
-                 penaltyOn=True,
+                 lamb=1.0,
                  tmpdirname=None
                  ):
 
@@ -142,7 +142,7 @@ def runInference(named_terms,
         rs,
         beta,
         params_dict,
-        penaltyOn=penaltyOn,
+        lamb=lamb,
     )
 
 
@@ -150,7 +150,7 @@ def make_name(parameters):
     return "_".join(parameters[0]) + "_" + "_".join(parameters[1])
 
 
-def main(parameters, state_cutoff, w0, beta, train_rs, niter_opt, tol_opt, maxfev_opt, nCV_iter, param_functions, penaltyOn):
+def main(parameters, state_cutoff, w0, beta, train_rs, niter_opt, tol_opt, maxfev_opt, nCV_iter, param_functions, lamb):
     with mlflow.start_run():
         # Write model and plots to temp dir
         with tempfile.TemporaryDirectory() as output_dir:
@@ -174,7 +174,7 @@ def main(parameters, state_cutoff, w0, beta, train_rs, niter_opt, tol_opt, maxfe
                       beta=beta,
                       p=0, # Set to 0, no CV for now
                       state_cutoff=state_cutoff,  #state_cutoff,
-                      penaltyOn=penaltyOn,
+                      lamb=lamb,
                       niter_opt=niter_opt,
                       tol_opt=tol_opt,
                       maxfev_opt=maxfev_opt
@@ -189,8 +189,8 @@ def main(parameters, state_cutoff, w0, beta, train_rs, niter_opt, tol_opt, maxfe
                              twobody_params=parameters[1],
                              rs=train_rs,
                              beta=beta,
-                             state_cutoff=state_cutoff,  #state_cutoff,
-                             penaltyOn=penaltyOn, #False or True
+                             state_cutoff=state_cutoff,
+                             lamb=lamb,
                              )
 
                 """ runInference(named_terms="hchain8_named_operators.hdf5",
@@ -232,7 +232,7 @@ if __name__ == "__main__":
     parser.add_argument("--state_cutoff")
     parser.add_argument("--w0", type=float)
     parser.add_argument("--beta", type=float)
-    parser.add_argument("--penalty_state", type=str) # Argparse does not support booleans...
+    parser.add_argument("--lamb", type=float)
     parser.add_argument("--niter_opt", type=int)
     parser.add_argument("--tol_opt", type=float)
     parser.add_argument("--nCV_iter", type=int, default=1)
@@ -248,12 +248,12 @@ if __name__ == "__main__":
         state_cutoff = int(args.state_cutoff)
     w0 = args.w0
     beta = args.beta
+    lamb = args.lamb
     train_rs = [float(r) for r in args.train_rs.split(",")]
     niter_opt = args.niter_opt
     tol_opt = args.tol_opt
     nCV_iter = args.nCV_iter
     maxfev_opt = args.maxfev_opt
     param_functions = args.parameter_functions[0].split(',') + args.parameter_functions[1].split(',')
-    penalty_state = bool(args.penalty_state)
 
-    main(parameters, state_cutoff, w0, beta, train_rs, niter_opt, tol_opt, maxfev_opt, nCV_iter, param_functions, penalty_state)
+    main(parameters, state_cutoff, w0, beta, train_rs, niter_opt, tol_opt, maxfev_opt, nCV_iter, param_functions, lamb)

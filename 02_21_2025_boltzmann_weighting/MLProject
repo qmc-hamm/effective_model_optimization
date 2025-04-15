@@ -13,12 +13,12 @@ entry_points:
         state_cutoff: {type: float, default: None}
         train_rs: {type: str, default: "2.2, 2.8, 3.2, 3.6, 4.0, 4.4, 5.0"}
         w0: {type: float, default: 0.9}
+        beta: {type: float, default: 0.0}
+        lamb: {type: float, default: 1.0}
         parameter0: {type: string, default: "trace, t_1"}
         parameter1: {type: string, default: "doccp"}
         parameter_function0: {type: string, default: "independent"}
         parameter_function1: {type: string, default: "independent,independent"}
-        beta: {type: float, default: 0.0}
-        penalty_state: {type: str, default: "True"}
 
         # These parameters can be used to make quick training
         # runs for debugging purposes.
@@ -32,13 +32,13 @@ entry_points:
               --train_rs {train_rs} \
               --w0 {w0} \
               --beta {beta} \
+              --lamb {lamb} \
               --niter_opt {niter_opt} \
               --tol_opt {tol_opt} \
               --maxfev_opt {maxfev_opt} \
               --nCV_iter {nCV_iter} \
               --parameters {parameter0} {parameter1} \
-              --parameter_functions {parameter_function0} {parameter_function1}
-              --penalty_state {penalty_state}"
+              --parameter_functions {parameter_function0} {parameter_function1}"
   scan:
     # Run a scan over a parameter space. Launches multiple cross-validation
     # training steps in parallel using the MLFlow main entry point above.

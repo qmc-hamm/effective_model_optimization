@@ -223,30 +223,6 @@ def descriptor_distance(
     return distance
 
 
-def unmapped_penalty(energy_m_unmapped, max_energy_ab: float, norm):
-    """Fills out the rest of the distance matrix. The penalty matrix to map unmapped to ab initio states.
-
-    Parameters
-    ----------
-    energy_m_unmapped : nd.array(float)
-        The energies of the model states that are unmapped.
-    max_energy_ab : float
-        Maximum ab initio energy in the dataset.
-    norm : float
-        Norm to normalize the incoming data. (sigma_{E}_{ab})^2
-
-    Returns
-    -------
-    nd.array
-        Shape: (len(energy_m_unmapped), nroots for model). Penalty for the unmapped states to be mapped to
-        ab initio states.
-    """
-    penalty = np.sum(
-        (np.maximum(0, max_energy_ab - energy_m_unmapped) ** 2) / norm["energy"]
-    )
-    return penalty
-
-
 def evaluate_loss(
     params: np.ndarray,
     keys,
@@ -261,7 +237,7 @@ def evaluate_loss(
     fcivec,
     norm,
     r,
-    penaltyOn,
+    lamb,
 ) -> float:
     """The actual Loss functional.
 
@@ -324,10 +300,7 @@ def evaluate_loss(
     distance = distance*boltzmann_weights.values[:,np.newaxis]
 
     npenalty = nroots - len(ai_df)
-    if penaltyOn:
-        penalty = np.maximum(0, max_ai_energy - descriptors['energy'])
-    else: 
-        penalty = np.zeros((nroots))
+    penalty = lamb*( (np.maximum(0, max_ai_energy - descriptors['energy']))**2 / norm["energy"])
     distance = np.vstack((distance, np.tile(w_0 * penalty, (npenalty, 1))))
 
     row_ind, col_ind = linear_sum_assignment(distance)
@@ -380,7 +353,7 @@ def evaluate_loss_para_function(
     matches,
     fcivec,
     norm_rs,
-    penaltyOn,
+    lamb,
 ):
 
     #print(keys) # E0, t, U
@@ -410,7 +383,7 @@ def evaluate_loss_para_function(
                                         None,
                                         norm_rs[f'r{r}'],
                                         r,
-                                        penaltyOn)
+                                        lamb)
         sum_loss += losses[f'r{r}']["loss"]
         sum_spec_rmse += losses[f'r{r}']["Spectrum RMSE"]
 
@@ -441,7 +414,7 @@ def CV_evaluate_loss(
     train_states,
     val_states,
     r,
-    penaltyOn,
+    lamb,
 ) -> float:
 
     w_0 = weights[0]
@@ -470,10 +443,7 @@ def CV_evaluate_loss(
     distance = distance*boltzmann_weights.values[:,np.newaxis]
 
     npenalty = nroots - len(ai_df)
-    if penaltyOn:
-        penalty = (np.maximum(0, max_ai_energy - descriptors['energy']))**2 / norm["energy"]
-    else: 
-        penalty = np.zeros((nroots))
+    penalty = lamb*( (np.maximum(0, max_ai_energy - descriptors['energy']))**2 / norm["energy"])
     distance_train = np.vstack((distance[train_states], np.tile(w_0 * penalty, (npenalty, 1))))
     distance = np.vstack((distance, np.tile(w_0 * penalty, (npenalty, 1))))
 
@@ -567,7 +537,7 @@ def evaluate_loss_CV_para_function(
     norm_rs,
     train_states_rs,
     val_states_rs,
-    penaltyOn,
+    lamb,
 ):
 
     #print(keys) # E0, t, U
@@ -599,7 +569,7 @@ def evaluate_loss_CV_para_function(
                                            train_states_rs[f'r{r}'],
                                            val_states_rs[f'r{r}'],
                                            r,
-                                           penaltyOn,)
+                                           lamb,)
         sum_loss += losses[f'r{r}']["train_loss"]
         sum_spec_rmse_train += losses[f'r{r}']["Spectrum RMSE Train"]
         sum_spec_rmse_val += losses[f'r{r}']["Spectrum RMSE Val"]
@@ -645,7 +615,7 @@ def setup_train(
     beta: float,
     p: int,
     guess_params=None,
-    penaltyOn=True,
+    lamb=1.0,
     clip_val=1,
     niter_opt=1000,
     tol_opt=1e-7,
@@ -764,7 +734,7 @@ def setup_train(
             norm_rs,
             train_states_rs,
             val_states_rs,
-            penaltyOn,
+            lamb,
         ),
         jac="3-point",
         method="Powell",
@@ -795,14 +765,14 @@ def setup_train(
                                           norm_rs,
                                           train_states_rs,
                                           val_states_rs,
-                                          penaltyOn)
+                                          lamb)
 
     with h5py.File(outfile, "w") as f:
         f["train_rs"] = train_rs
         f["para_w_0"] = weights[0]
         f["para_w_1"] = weights[1]
         f["beta"] = beta
-        f["isPenaltyOn"] = penaltyOn
+        f["lambda penalty coefficient"] = lamb
         f["loss"] = xmin.fun
         f["params"] = onebody_params + twobody_params
         f["params functions"] = param_functions
@@ -849,7 +819,7 @@ def inference(
     rs: list,
     beta: float,
     params_dict: dict[str, list],
-    penaltyOn=True,
+    lamb: float = 1.0,
     clip_val=1,
 ):
     max_ai_energy_rs = {}
@@ -891,7 +861,7 @@ def inference(
                                       None,
                                       norm_rs[f'r{r}'],
                                       r,
-                                      penaltyOn,)
+                                      lamb)
 
     with h5py.File(outfile, "a") as f:
         inf_str = f"inference_{inference_name}/"

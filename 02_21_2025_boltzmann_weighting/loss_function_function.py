@@ -471,7 +471,7 @@ def CV_evaluate_loss(
 
     npenalty = nroots - len(ai_df)
     if penaltyOn:
-        penalty = np.maximum(0, max_ai_energy - descriptors['energy'])
+        penalty = (np.maximum(0, max_ai_energy - descriptors['energy']))**2 / norm["energy"]
     else: 
         penalty = np.zeros((nroots))
     distance_train = np.vstack((distance[train_states], np.tile(w_0 * penalty, (npenalty, 1))))

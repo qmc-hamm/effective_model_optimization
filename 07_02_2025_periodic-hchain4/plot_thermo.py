@@ -307,6 +307,7 @@ def plot_thermo(dirname: str, fnames: list[str], inference_names: list[str], abi
         for r in np.unique(df_model_whole.r):
             df = pd.read_csv(abinitio_names[i])
             df = df[df.r == r].reset_index()
+            df = df[df.delta == 0.0].reset_index()
             df_model = df_model_whole[df_model_whole.r == r].reset_index()
 
             thermo_df = gather_thermo_data(df['energy'], df_model)

@@ -37,7 +37,7 @@ parameter_sets = [
     # (['E0', 't','tdiag'], ['U', 'V','J']),
 ]
 param_function_sets = [
-    {'trace':'independent', 'e_end':'independent', 'e_center':'independent', 'doccp':'independent', 't_1':'independent', 't_2':'independent', 't_3':'independent', 'v':'independent', 'sisj':'independent', 'densityNN':'independent'},
+    {'trace':'independent', 'e_end':'independent', 'e_center':'independent', 'doccp':'independent', 't_1':'independent', 't_2':'independent', 't_3':'independent', 'v':'independent', 'sisj':'independent', 'densityNN':'independent', 'exchange':'independent', 'hophop':'independent'},
 #    {'trace':'func_E0', 'doccp':'independent', 't_1':'independent'},
 #    {'trace':'func_E0', 'doccp':'independent', 't_1':'polynomial5'},
 #    {'trace': 'func_E0', 'doccp': 'independent', 't_1': 'exponential'},
@@ -60,7 +60,7 @@ ws = [
 ]
 
 betas = [
-         0.1, 0.2, 0.4, 0.8, 1.0, 2.0, 4.0, 8.0, 9.0, 10.0
+         0.1, 0.15, 0.2, 0.3, 0.4, 0.6, 0.8, 1.0, 2.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0
          ]
 
 lambdas =[

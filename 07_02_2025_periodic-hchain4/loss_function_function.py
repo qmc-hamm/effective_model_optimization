@@ -695,6 +695,10 @@ def setup_train(
                 dmd_train_rs_params[j][i] = np.random.uniform(-2, 2, 1)
             if param == 'densityNN':
                 dmd_train_rs_params[j][i] = np.random.uniform(-2, 2, 1)
+            if param == 'exchange':
+                dmd_train_rs_params[j][i] = np.random.uniform(-2, 2, 1)
+            if param == 'hophop':
+                dmd_train_rs_params[j][i] = np.random.uniform(-2, 2, 1)
 
     print("DMD parameters for train_rs: ", onebody_params + twobody_params)
     print(dmd_train_rs_params)

@@ -1,0 +1,10 @@
+{
+  "partition": "qmchamm",
+  "time": "11:59:00",
+  "exports": [
+    "MODULEPATH",
+    "BASH_FUNC_module()",
+    "MODULESHOME",
+    "LOADEDMODULES"
+  ]
+}

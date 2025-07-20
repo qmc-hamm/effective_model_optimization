@@ -676,7 +676,7 @@ def setup_train(
     for i, r in enumerate(train_rs):
         for j, param in enumerate(onebody_params + twobody_params):
             if param == 'trace':
-                dmd_train_rs_params[j][i] = np.random.uniform(-15, -10, 1)
+                dmd_train_rs_params[j][i] = np.random.uniform(-17, -10, 1)
             if param == 'e_center':
                 dmd_train_rs_params[j][i] = np.random.uniform(-15, -10, 1)
             if param == 'e_end':
@@ -684,7 +684,7 @@ def setup_train(
             if param == 't_1':
                 dmd_train_rs_params[j][i] = np.random.uniform(-4, 0, 1)
             if param == 't_2':
-                dmd_train_rs_params[j][i] = np.random.uniform(-1, 1, 1)
+                dmd_train_rs_params[j][i] = np.random.uniform(0, 0.5, 1)
             if param == 't_3':
                 dmd_train_rs_params[j][i] = np.random.uniform(-1, 1, 1)
             if param == 'doccp':
@@ -692,13 +692,13 @@ def setup_train(
             if param == 'v':
                 dmd_train_rs_params[j][i] = np.random.uniform(-2, 2, 1)
             if param == 'sisj':
-                dmd_train_rs_params[j][i] = np.random.uniform(-2, 2, 1)
+                dmd_train_rs_params[j][i] = np.random.uniform(-0.5, 0, 1)
             if param == 'densityNN':
-                dmd_train_rs_params[j][i] = np.random.uniform(-2, 2, 1)
+                dmd_train_rs_params[j][i] = np.random.uniform(0, 3, 1)
             if param == 'exchange':
-                dmd_train_rs_params[j][i] = np.random.uniform(-2, 2, 1)
+                dmd_train_rs_params[j][i] = np.random.uniform(0.0, 0.5, 1)
             if param == 'hophop':
-                dmd_train_rs_params[j][i] = np.random.uniform(-2, 2, 1)
+                dmd_train_rs_params[j][i] = np.random.uniform(0, 2, 1)
 
     print("DMD parameters for train_rs: ", onebody_params + twobody_params)
     print(dmd_train_rs_params)

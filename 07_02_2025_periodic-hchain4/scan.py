@@ -10,31 +10,12 @@ parameter_sets = [
     #(['trace'], ['sisj', 'doccp']),
      (['trace', 't_1'], ['doccp']),
     #(['trace', 't_1', 't_2', 't_3'], ['doccp', 'sisj', 'v']),
-    #(['trace', 't_1', 't_2'], ['doccp']),
-    #(['trace', 't_1', 't_3'], ['doccp']),
-    #(['trace', 't_1', 't_2', 't_3'], ['doccp']),
-    #(['trace', 't_1', 't_2'], ['doccp', 'sisj']),
-    #(['trace', 't_1', 't_3'], ['doccp', 'sisj']),
-    #(['trace', 't_1', 't_2'], ['doccp', 'v']),
-    #(['e_end', 'e_center', 't_1'], ['doccp']),
-    #(['e_end', 'e_center', 't_1'], ['doccp', 'sisj']), # not as good
+    (['trace', 't_1', 't_2'], ['doccp']),
      (['trace', 't_1'], ['doccp', 'sisj']),
-    #(['trace', 't_1'], ['doccp', 'v']),
-    #(['trace'], ['sisj']),
-    #(['trace', 't_1'], ['sisj']),
-    #(['trace'], ['doccp', 'sisj']),
-    #(['trace', 't_1'], ['doccp', 'sisj', 'densityNN']),
-    #(['trace', 't_1'], ['doccp', 'densityNN']),
-    #(['E0', 't'], ['U']),
-    # (['E0', 't', 'tdiag'], ['U']),
-    #(['E0', 't'], ['U', 'V']),
-    #(['E0', 't'], ['U', 'J']),
-    #(['E0', 't'], ['U', 'V', 'J']),
-    # (['E0', 't'], ['J']),
-    # (['E0'], ['U', 'J']),
-    # (['E0', 't','tdiag'], ['U', 'J']),
-    # (['E0', 't','tdiag'], ['U', 'V']),
-    # (['E0', 't','tdiag'], ['U', 'V','J']),
+    (['trace', 't_1'], ['doccp', 'hophop']),
+    (['trace', 't_1'], ['doccp', 'exchange']),
+    (['trace', 't_1'], ['doccp', 'densityNN']),
+    (['trace', 't_1'], ['doccp', 'sisj', 'densityNN']),
 ]
 param_function_sets = [
     {'trace':'independent', 'e_end':'independent', 'e_center':'independent', 'doccp':'independent', 't_1':'independent', 't_2':'independent', 't_3':'independent', 'v':'independent', 'sisj':'independent', 'densityNN':'independent', 'exchange':'independent', 'hophop':'independent'},
@@ -60,7 +41,7 @@ ws = [
 ]
 
 betas = [
-         0.1, 0.15, 0.2, 0.3, 0.4, 0.6, 0.8, 1.0, 2.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0
+         0.1, 0.15, 0.2, 0.3, 0.4, 0.6, 0.8, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0,
          ]
 
 lambdas =[

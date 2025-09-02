@@ -672,7 +672,7 @@ def setup_train(
 
         dmd_train_rs_params[E0_ind][i] = (ai_df["energy"][0] - fitted_ground_state_energy) / onebody[onebody_params[0]].shape[0]  # divide by number the number of sites ; make generic
 
-    # TEST RANDOM STARTING PLACE
+    """ # TEST RANDOM STARTING PLACE
     for i, r in enumerate(train_rs):
         for j, param in enumerate(onebody_params + twobody_params):
             if param == 'trace':
@@ -698,7 +698,7 @@ def setup_train(
             if param == 'exchange':
                 dmd_train_rs_params[j][i] = np.random.uniform(0.0, 0.5, 1)
             if param == 'hophop':
-                dmd_train_rs_params[j][i] = np.random.uniform(0, 2, 1)
+                dmd_train_rs_params[j][i] = np.random.uniform(0, 2, 1) """
 
     print("DMD parameters for train_rs: ", onebody_params + twobody_params)
     print(dmd_train_rs_params)
@@ -772,17 +772,51 @@ def setup_train(
         tol=tol_opt,
         options={"maxiter": niter_opt, "maxfev": maxfev_opt, 'disp': True, 'return_all':True},
     )
+    
+    print("\nStarting final w=0 optimization ---")
+    x0 = xmin.x
 
-    print("function value", xmin.fun)
-    print("parameters", xmin.x)
+    print(f"function value with weights {weights} : ", xmin.fun)
+    print(f"parameters with weights {weights} : ", x0)
 
-    print("Evaluate train data after optimization:")
+    xmin = minimize(
+        optimize_CV_para_function,
+        x0,
+        args=(
+            x0_ind,
+            param_functions,
+            train_rs,
+            keys,
+            [1.0, 0.0], # Pure spectral optimization
+            boltzmann_weights_rs,
+            onebody,
+            twobody,
+            ai_df_rs,
+            max_ai_energy_rs,
+            nroots,
+            matches,
+            None,
+            norm_rs,
+            train_states_rs,
+            val_states_rs,
+            lamb,
+        ),
+        jac="3-point",
+        method="Powell",
+        tol=tol_opt,
+        options={"maxiter": niter_opt, "maxfev": maxfev_opt, 'disp': True, 'return_all':True},
+    )
+
+    print(f"final - function value with pure spectrum weighting: ", xmin.fun)
+    print(f"final - parameters with pure spectrum weighting : ", xmin.x)
+
+    print("\nEvaluate train data after optimization ----")
     data = evaluate_loss_CV_para_function(xmin.x,
                                           x0_ind,
                                           param_functions,
                                           train_rs,
                                           keys,
-                                          weights,
+                                          [1.0, 0.0], # Pure spectral optimization
                                           boltzmann_weights_rs,
                                           onebody,
                                           twobody,
@@ -796,12 +830,21 @@ def setup_train(
                                           val_states_rs,
                                           lamb)
 
+    spectrum_RMSE_kt_r = {}
+    for i, r in enumerate(train_rs):
+        print(f"final evaluation r{r} - function value with pure spectrum weighting : ", data[f'r{r}']["train_loss"])
+        train_row_inds = data[f"r{r}"]["row_ind"]
+        train_col_inds = data[f"r{r}"]["col_ind"]
+        spectrum_RMSE_kt_r[f"r{r}"] = np.sqrt(np.mean(((ai_df_rs[f'r{r}']['energy'].values[train_row_inds] - data[f"r{r}"]["descriptors"]["energy"][train_col_inds])*boltzmann_weights_rs[f"r{r}"])**2))
+    print('\n')
+
     with h5py.File(outfile, "w") as f:
         f["train_rs"] = train_rs
         f["Parameter: Spectral weight"] = weights[0]
         f["Parameter: w, Physical descriptor weight"] = weights[1]
         f["Parameter: beta, low-energy states weights"] = beta
         f["Parameter: lambda, penalty weight"] = lamb
+        f["Parameter: state selection"] = len(train_row_inds)
         f["loss"] = xmin.fun
         f["params"] = onebody_params + twobody_params
         f["params functions"] = param_functions
@@ -820,6 +863,7 @@ def setup_train(
 
             ai_df = ai_df_rs[f"r{r}"]
             f[f"r{r}/" + "ai_spectrum_range"] = np.max(ai_df["energy"]) - np.min(ai_df["energy"])
+            f[f"r{r}/" + "spectrum_RMSE_<kt>"] = spectrum_RMSE_kt_r[f"r{r}"]
 
             f[f"r{r}/" + "nstates_train"] = len(train_states_rs[f"r{r}"])
             f[f"r{r}/" + "nstates_val"] = len(val_states_rs[f"r{r}"])

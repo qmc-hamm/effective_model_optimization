@@ -41,6 +41,8 @@ def gather_data_to_plot(dirname, fnames, inference_names, parameters):
                 data_r['CV iteration'] = i
 
                 data_r['loss'] = f['loss'][()]
+                data_r['beta'] = f['Parameter: beta, low-energy states weights'][()]
+                data_r['w'] = f['Parameter: w, Physical descriptor weight'][()]
 
                 if r in train_rs:
                     data_r['Spectrum RMSE Train (eV)'] = f[f'r{r}/Spectrum RMSE Train'][()]
@@ -50,6 +52,23 @@ def gather_data_to_plot(dirname, fnames, inference_names, parameters):
                     data_r['loss/z'] = f[f'r{r}/train_loss'][()]/nstates
                     data_r['sloss/z'] = f[f'r{r}/train_sloss'][()]/nstates
                     data_r['dloss/z'] = f[f'r{r}/train_dloss'][()]/nstates
+
+                    data_r['spectrum RMSE*<kt>'] = f[f'r{r}/spectrum_RMSE_<kt>'][()]
+
+                    if data_r['beta'] != 0.0:
+                        data_r['temp (eV)'] = 1.0/data_r['beta']
+                        data_r['loss/kT'] = f[f'r{r}/train_loss'][()]/data_r['temp (eV)']
+                        data_r['sloss/kT'] = f[f'r{r}/train_sloss'][()]/data_r['temp (eV)']
+                        data_r['dloss/kT'] = f[f'r{r}/train_dloss'][()]/data_r['temp (eV)']
+                        data_r['Spectrum RMSE Train/kT'] = data_r['Spectrum RMSE Train (eV)']/data_r['temp (eV)']
+                        data_r['spectrum RMSE*<kt>/kT'] = data_r['spectrum RMSE*<kt>']/data_r['temp (eV)']
+                    elif data_r['beta'] == 0.0:
+                        data_r['temp (eV)'] = float('inf')
+                        data_r['loss/kT'] = f[f'r{r}/train_loss'][()]
+                        data_r['sloss/kT'] = f[f'r{r}/train_sloss'][()]
+                        data_r['dloss/kT'] = f[f'r{r}/train_dloss'][()]
+                        data_r['Spectrum RMSE Train/kT'] = data_r['Spectrum RMSE Train (eV)']
+                        data_r['spectrum RMSE*<kt>/kT'] = data_r['spectrum RMSE*<kt>']
 
                 for parameter in parameters:
                     data_r[f'RDMD {parameter} (eV)'] = f[f'r{r}/rdmd_params/{parameter}'][()]

@@ -256,9 +256,9 @@ def main(parameters, state_cutoff, w, beta, train_rs, niter_opt, tol_opt, maxfev
 
 if __name__ == "__main__":
     #temp = 10000000000000.0 #1000 # eV or T*kb
-    #beta = 0.0
+    #beta = 0.1
     #lamb = 1.0
-    #main((['trace', 't_1'], ['doccp']), 14, 0.4, beta, [3.0], 100, 1e-9, 1000, 2, ['independent', 'independent', 'independent'], lamb)
+    #main((['trace', 't_1'], ['doccp']), 150, 0.4, beta, [5.0], 100, 1e-9, 1000, 1, ['independent', 'independent', 'independent'], lamb)
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--parameters", type=str, nargs="+")

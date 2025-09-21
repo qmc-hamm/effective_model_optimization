@@ -152,13 +152,14 @@ def make_name(parameters):
     return "_".join(parameters[0]) + "_" + "_".join(parameters[1])
 
 
-def main(parameters, state_cutoff, w, beta, train_rs, niter_opt, tol_opt, maxfev_opt, nCV_iter, param_functions, lamb):
+def main(parameters, state_cutoff, w, beta, train_rs, niter_opt, tol_opt, maxfev_opt, nCV_iter, param_functions, lamb, df):
     with mlflow.start_run():
         # Write model and plots to temp dir
         with tempfile.TemporaryDirectory() as output_dir:
             model_files = []
             for i in range(nCV_iter):
                 pname = make_name(parameters)
+                df = df[df['model_name'] == pname]
                 dirname = os.path.join(output_dir, f"func_model_data_{state_cutoff}_{w}")
                 if not os.path.exists(dirname):
                     os.makedirs(dirname)
@@ -208,6 +209,7 @@ def main(parameters, state_cutoff, w, beta, train_rs, niter_opt, tol_opt, maxfev
                       p=0, # Set to 0, no CV for now
                       state_cutoff=state_cutoff,  #state_cutoff,
                       lamb=lamb,
+                      guess_params=df,
                       niter_opt=niter_opt,
                       tol_opt=tol_opt,
                       maxfev_opt=maxfev_opt
@@ -290,4 +292,6 @@ if __name__ == "__main__":
     maxfev_opt = args.maxfev_opt
     param_functions = args.parameter_functions[0].split(',') + args.parameter_functions[1].split(',')
 
-    main(parameters, state_cutoff, w, beta, train_rs, niter_opt, tol_opt, maxfev_opt, nCV_iter, param_functions, lamb)
+    df = pd.read_csv("model_parameters.csv")
+
+    main(parameters, state_cutoff, w, beta, train_rs, niter_opt, tol_opt, maxfev_opt, nCV_iter, param_functions, lamb, df)

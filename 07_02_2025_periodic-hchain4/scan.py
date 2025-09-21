@@ -31,13 +31,13 @@ rs_set = [
 state_cutoffs = [
     #None # Test Workflow
     #14 #8, 10, 12, 14
-    150
+    50
 ]
 ws = [
     #1.0, 0.9, 0.8, 0.7, 0.6
 #    1.0, 0.95, 0.9, 0.85, 0.8
 #    1.0, 0.9, 0.8, 0.7, 0.6
-    0.4  # Test Workflow 0.4
+    0.2#, 0.1, 0.2, 0.3, 0.4  # Test Workflow 0.4
 ]
 
 betas = [

@@ -1,0 +1,5 @@
+model_name,trace,t_1,doccp,sisj,densityNN
+trace_t_1_doccp,-12.97,-0.85,10.6,0.0,0.0
+trace_t_1_doccp_sisj,-12.95,-1.02,10.54,-0.25,0.0
+trace_t_1_doccp_densityNN,-15.79,-0.6,11.73,0.0,2.79
+trace_t_1_doccp_sisj_densityNN,-15.45,-0.85,11.58,-0.19,2.48

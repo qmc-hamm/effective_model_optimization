@@ -711,8 +711,12 @@ def setup_train(
     # Set up guess functions -------
     for j, param in enumerate(onebody_params + twobody_params):
         if param_functions[j] == 'independent':
-            x0.append(dmd_train_rs_params[j])
-            x0_ind.append(len(dmd_train_rs_params[j]) + x0_ind[j])
+            if isinstance(guess_params, pd.DataFrame):
+                x0.append(guess_params[param])
+                x0_ind.append(len(guess_params[param]) + x0_ind[j])
+            else: # guess_params is None
+                x0.append(dmd_train_rs_params[j])
+                x0_ind.append(len(dmd_train_rs_params[j]) + x0_ind[j])
         else:
             try:
                 popt, pcov = curve_fit(function_dict[param_functions[j]], train_rs, dmd_train_rs_params[j])

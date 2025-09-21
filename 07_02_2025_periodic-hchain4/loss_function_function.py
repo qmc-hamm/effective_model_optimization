@@ -749,7 +749,7 @@ def setup_train(
     # OPTMIZATION LOOP START
     print("Starting optimization")
 
-    xmin = minimize(
+    xmin0 = minimize(
         optimize_CV_para_function,
         x0,
         args=(
@@ -778,9 +778,9 @@ def setup_train(
     )
     
     print("\nStarting final w=0 optimization ---")
-    x0 = xmin.x
+    x0 = xmin0.x
 
-    print(f"function value with weights {weights} : ", xmin.fun)
+    print(f"function value with weights {weights} : ", xmin0.fun)
     print(f"parameters with weights {weights} : ", x0)
 
     xmin = minimize(
@@ -855,8 +855,8 @@ def setup_train(
         f["params functions paramters"] = xmin.x
         f["Mean over r Spectrum RMSE - Train"] = data["Mean over r Spectrum RMSE - Train"]
         f["Mean over r Spectrum RMSE - Validation"] = data["Mean over r Spectrum RMSE - Validation"]
-        f["iterations"] = xmin.nit
-        f["iterations_parameters"] = xmin['allvecs'] 
+        f["iterations"] = xmin0.nit + xmin.nit
+        f["iterations_parameters"] = xmin0['allvecs'] + xmin['allvecs']
         f["termination_message"] = xmin.message
 
         for i, r in enumerate(train_rs):

@@ -51,6 +51,7 @@ def runCV(named_terms,
         ai_df = pd.read_csv(ai_dir)
         ai_df = ai_df[ai_df.r == r]
         ai_df = ai_df[ai_df.delta == 0.0]
+        ai_df = ai_df[ai_df.trace >= len(onebody['trace'])*0.95]
         if state_cutoff is not None:
             ai_df = ai_df[ai_df.state < state_cutoff]
         ai_df = ai_df.reset_index()
@@ -115,6 +116,7 @@ def runInference(named_terms,
         ai_df = pd.read_csv(ai_dir)
         ai_df = ai_df[ai_df.r == r]
         ai_df = ai_df[ai_df.delta == 0.0]
+        ai_df = ai_df[ai_df.trace >= len(onebody['trace'])*0.95]
         if state_cutoff is not None:
             ai_df = ai_df[ai_df.state < state_cutoff]
         ai_df = ai_df.reset_index()
@@ -196,8 +198,10 @@ def main(parameters, state_cutoff, w, beta, train_rs, niter_opt, tol_opt, maxfev
                              lamb=lamb,
                              ) """
 
+                nMOs = 12
+                basis = 'vtz'
                 runCV(named_terms="hchain6_named_operators.hdf5",
-                      ai_dir="ai_data/ai_descriptors_natoms6_nMO6.csv",
+                      ai_dir=f"ai_data/ai_descriptors_natoms6_nMO{nMOs}_basis-{basis}.csv",
                       model_descriptors=model_file_path,
                       nroots=250,
                       onebody_params=parameters[0],
@@ -216,7 +220,7 @@ def main(parameters, state_cutoff, w, beta, train_rs, niter_opt, tol_opt, maxfev
                       )
 
                 runInference(named_terms="hchain6_named_operators.hdf5",
-                             ai_dir="ai_data/ai_descriptors_natoms6_nMO6.csv",
+                             ai_dir=f"ai_data/ai_descriptors_natoms6_nMO{nMOs}_basis-{basis}.csv",
                              model_descriptors=model_file_path,
                              inference_name="natoms6_casci",
                              nroots=400,
@@ -252,8 +256,8 @@ def main(parameters, state_cutoff, w, beta, train_rs, niter_opt, tol_opt, maxfev
 
                 mlflow.log_artifact(model_file_path)
                 model_files.append(model_file_path)
-            plot_model(output_dir, model_files, ["natoms6_casci"], parameters)
-            plot_thermo(output_dir, model_files, ["natoms6_casci"], ["ai_data/ai_descriptors_natoms6_nMO6.csv"], parameters)
+            plot_model(output_dir, model_files, [f"natoms6_casci_nMO{nMOs}_basis-{basis}"], parameters)
+            plot_thermo(output_dir, model_files, [f"natoms6_casci_nMO{nMOs}_basis-{basis}"], [f"ai_data/ai_descriptors_natoms6_nMO{nMOs}_basis-{basis}.csv"], parameters)
 
 
 if __name__ == "__main__":

@@ -51,7 +51,7 @@ def runCV(named_terms,
         ai_df = pd.read_csv(ai_dir)
         ai_df = ai_df[ai_df.r == r]
         ai_df = ai_df[ai_df.delta == 0.0]
-        ai_df = ai_df[ai_df.trace >= len(onebody['trace'])*0.95]
+        ai_df = ai_df[ai_df.trace >= len(onebody['trace'])*0.91]
         if state_cutoff is not None:
             ai_df = ai_df[ai_df.state < state_cutoff]
         ai_df = ai_df.reset_index()
@@ -116,7 +116,7 @@ def runInference(named_terms,
         ai_df = pd.read_csv(ai_dir)
         ai_df = ai_df[ai_df.r == r]
         ai_df = ai_df[ai_df.delta == 0.0]
-        ai_df = ai_df[ai_df.trace >= len(onebody['trace'])*0.95]
+        ai_df = ai_df[ai_df.trace >= len(onebody['trace'])*0.91]
         if state_cutoff is not None:
             ai_df = ai_df[ai_df.state < state_cutoff]
         ai_df = ai_df.reset_index()
@@ -201,7 +201,7 @@ def main(parameters, state_cutoff, w, beta, train_rs, niter_opt, tol_opt, maxfev
                 nMOs = 12
                 basis = 'vtz'
                 runCV(named_terms="hchain6_named_operators.hdf5",
-                      ai_dir=f"ai_data/ai_descriptors_natoms6_nMO{nMOs}_basis-{basis}.csv",
+                      ai_dir=f"ai_data/ai_descriptors_natoms6_nMO{nMOs}_basis{basis}.csv",
                       model_descriptors=model_file_path,
                       nroots=250,
                       onebody_params=parameters[0],
@@ -213,7 +213,7 @@ def main(parameters, state_cutoff, w, beta, train_rs, niter_opt, tol_opt, maxfev
                       p=0, # Set to 0, no CV for now
                       state_cutoff=state_cutoff,  #state_cutoff,
                       lamb=lamb,
-                      guess_params=df,
+                      guess_params=None,#df,
                       niter_opt=niter_opt,
                       tol_opt=tol_opt,
                       maxfev_opt=maxfev_opt
@@ -222,7 +222,7 @@ def main(parameters, state_cutoff, w, beta, train_rs, niter_opt, tol_opt, maxfev
                 runInference(named_terms="hchain6_named_operators.hdf5",
                              ai_dir=f"ai_data/ai_descriptors_natoms6_nMO{nMOs}_basis-{basis}.csv",
                              model_descriptors=model_file_path,
-                             inference_name="natoms6_casci",
+                             inference_name=f"natoms6_casci_nMO{nMOs}_basis-{basis}",
                              nroots=400,
                              onebody_params=parameters[0],
                              twobody_params=parameters[1],
@@ -286,7 +286,12 @@ if __name__ == "__main__":
         state_cutoff = None
     else:
         state_cutoff = int(args.state_cutoff)
-    w = args.w
+    
+    print(parameters[1])
+    if 'densityNN' in parameters[1]:
+        w = 0.02
+    else:
+        w = args.w
     beta = args.beta
     lamb = args.lamb
     train_rs = [float(r) for r in args.train_rs.split(",")]

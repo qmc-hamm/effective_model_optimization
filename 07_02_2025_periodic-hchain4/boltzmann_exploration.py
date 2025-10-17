@@ -198,7 +198,7 @@ def main(parameters, state_cutoff, w, beta, train_rs, niter_opt, tol_opt, maxfev
                              lamb=lamb,
                              ) """
 
-                nMOs = 12
+                nMOs = 18
                 basis = 'vtz'
                 runCV(named_terms="hchain6_named_operators.hdf5",
                       ai_dir=f"ai_data/ai_descriptors_natoms6_nMO{nMOs}_basis{basis}.csv",
@@ -220,9 +220,9 @@ def main(parameters, state_cutoff, w, beta, train_rs, niter_opt, tol_opt, maxfev
                       )
 
                 runInference(named_terms="hchain6_named_operators.hdf5",
-                             ai_dir=f"ai_data/ai_descriptors_natoms6_nMO{nMOs}_basis-{basis}.csv",
+                             ai_dir=f"ai_data/ai_descriptors_natoms6_nMO{nMOs}_basis{basis}.csv",
                              model_descriptors=model_file_path,
-                             inference_name=f"natoms6_casci_nMO{nMOs}_basis-{basis}",
+                             inference_name=f"natoms6_casci_nMO{nMOs}_basis{basis}",
                              nroots=400,
                              onebody_params=parameters[0],
                              twobody_params=parameters[1],
@@ -256,8 +256,8 @@ def main(parameters, state_cutoff, w, beta, train_rs, niter_opt, tol_opt, maxfev
 
                 mlflow.log_artifact(model_file_path)
                 model_files.append(model_file_path)
-            plot_model(output_dir, model_files, [f"natoms6_casci_nMO{nMOs}_basis-{basis}"], parameters)
-            plot_thermo(output_dir, model_files, [f"natoms6_casci_nMO{nMOs}_basis-{basis}"], [f"ai_data/ai_descriptors_natoms6_nMO{nMOs}_basis-{basis}.csv"], parameters)
+            plot_model(output_dir, model_files, [f"natoms6_casci_nMO{nMOs}_basis{basis}"], parameters)
+            plot_thermo(output_dir, model_files, [f"natoms6_casci_nMO{nMOs}_basis{basis}"], [f"ai_data/ai_descriptors_natoms6_nMO{nMOs}_basis{basis}.csv"], parameters)
 
 
 if __name__ == "__main__":
@@ -289,6 +289,16 @@ if __name__ == "__main__":
     
     print(parameters[1])
     if 'densityNN' in parameters[1]:
+        w = 0.02
+    if 'denhop_three_NN' in parameters[1]:
+        w = 0.02
+    if 'denhop_two_NN' in parameters[1]:
+        w = 0.02
+    if 'hophop_four_NN_1' in parameters[1]:
+        w = 0.02
+    if 'hophop_four_NN_2' in parameters[1]:
+        w = 0.02
+    if 'hophop_three_NN' in parameters[1]:
         w = 0.02
     else:
         w = args.w

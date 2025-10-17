@@ -928,7 +928,7 @@ def inference(
     for r in rs:
         data[f'r{r}'] = evaluate_loss(params_dict[f'r{r}'],
                                       matches,
-                                      [1.0, 0.0],
+                                      [0.9, 0.1],
                                       boltzmann_weights_rs[f'r{r}'],
                                       onebody,
                                       twobody,

@@ -902,7 +902,7 @@ def inference(
 ):
     max_ai_energy_rs = {}
     norm_rs = {}
-    natoms = onebody[matches[0]].shape[0]
+    natoms = onebody[onebody_params[0]].shape[0]
 
     boltzmann_weights_rs = {}
 
@@ -927,7 +927,7 @@ def inference(
 
     for r in rs:
         data[f'r{r}'] = evaluate_loss(params_dict[f'r{r}'],
-                                      matches,
+                                      onebody_params+twobody_params,
                                       [0.9, 0.1],
                                       boltzmann_weights_rs[f'r{r}'],
                                       onebody,

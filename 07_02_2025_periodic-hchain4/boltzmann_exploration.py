@@ -59,7 +59,7 @@ def runCV(named_terms,
 
     #print(ai_df_rs)
 
-    matches = onebody_params + twobody_params
+    matches = ['trace', 't_1', 't_2', 'doccp', 'sisj', 'sisjNNN'] #onebody_params + twobody_params
     weights = [1 - w, w]
 
     loss_function.setup_train(
@@ -122,14 +122,14 @@ def runInference(named_terms,
         ai_df = ai_df.reset_index()
         ai_df_rs[f'r{r}'] = ai_df
 
-    matches = onebody_params + twobody_params
+    matches = ['trace', 't_1', 't_2', 'doccp', 'sisj', 'sisjNNN'] #onebody_params + twobody_params
 
     params_dict = {}
 
     with h5py.File(model_descriptors, 'r') as f:
         for r in rs:
             param_list = []
-            for parameter in matches:
+            for parameter in onebody_params + twobody_params:
                 param_list.append(f[f'r{r}/rdmd_params/{parameter}'][()])
             params_dict[f'r{r}'] = np.array(param_list)
 
@@ -288,20 +288,20 @@ if __name__ == "__main__":
         state_cutoff = int(args.state_cutoff)
     
     print(parameters[1])
-    if 'densityNN' in parameters[1]:
-        w = 0.02
-    if 'denhop_three_NN' in parameters[1]:
-        w = 0.02
-    if 'denhop_two_NN' in parameters[1]:
-        w = 0.02
-    if 'hophop_four_NN_1' in parameters[1]:
-        w = 0.02
-    if 'hophop_four_NN_2' in parameters[1]:
-        w = 0.02
-    if 'hophop_three_NN' in parameters[1]:
-        w = 0.02
-    else:
-        w = args.w
+    #if 'densityNN' in parameters[1]:
+    #   w = 0.02
+    #elif 'denhop_three_NN' in parameters[1]:
+    #   w = 0.02
+    #elif 'denhop_two_NN' in parameters[1]:
+    #   w = 0.02
+    #elif 'hophop_four_NN_1' in parameters[1]:
+    #    w = 0.02
+    #elif 'hophop_four_NN_2' in parameters[1]:
+    #    w = 0.02
+    #elif 'hophop_three_NN' in parameters[1]:
+    #    w = 0.02
+    # else:
+    w = args.w
     beta = args.beta
     lamb = args.lamb
     train_rs = [float(r) for r in args.train_rs.split(",")]

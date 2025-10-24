@@ -7,34 +7,37 @@ import mlflow
 
 # Hyperparameters
 parameter_sets = [
-    #(['trace'], ['sisj', 'doccp']),
-     #(['trace', 't_1'], ['doccp', 'densityNN']),
-    # (['trace', 't_1'], ['doccp']),
-    #(['trace', 't_1', 't_2', 't_3'], ['doccp', 'sisj', 'v']),
-     #(['trace', 't_1', 't_2'], ['doccp']),
-     #(['trace', 't_1'], ['doccp', 'sisj']),
+    # Three terms
+    (['trace', 't_1'], ['doccp']),
+    (['trace'], ['sisj', 'doccp']),
+    (['trace'], ['doccp', 'hophop']),
+    (['trace'], ['doccp', 'denhop_three_NN']),
+    (['trace'], ['doccp', 'denhop_two_NN']),
+    (['trace'], ['doccp', 'hophop_three_NN']),
+
+    # Four Terms
+    #(['trace', 't_1'], ['doccp', 'sisj']),
+    #(['trace', 't_1'], ['doccp', 'densityNN']),
+    #(['trace', 't_1', 't_2'], ['doccp']),
     #(['trace', 't_1'], ['doccp', 'hophop']),
-    #(['trace', 't_1'], ['doccp', 'exchange']),
-    #(['trace', 't_1'], ['doccp', 'sisj', 'densityNN']),
-    #
-    #(['trace'], ['doccp', 'hophop']),
-    #(['trace'], ['doccp', 'denhop_three_NN']),
-    #(['trace'], ['doccp', 'denhop_two_NN']),
-    #(['trace'], ['doccp', 'hophop_three_NN']),
     #(['trace', 't_1'], ['doccp', 'hophop_four_NN_1']),
     #(['trace', 't_1'], ['doccp', 'hophop_four_NN_2']),
-    #denhop_three_NN,denhop_two_NN,hophop_four_NN_1,hophop_four_NN_2,hophop_three_NN
-
-    (['trace', 't_1'], ['doccp', 'densityNN']),
-    (['trace', 't_1'], ['doccp', 'sisj', 'densityNN']),
-    (['trace', 't_1', 't_2'], ['doccp', 'densityNN']),
-    (['trace', 't_1'], ['doccp', 'densityNN', 'denhop_three_NN']),
-    (['trace', 't_1'], ['doccp', 'densityNN', 'hophop_four_NN_1']),
-    (['trace', 't_1'], ['doccp', 'densityNN', 'hophop_four_NN_2']),
-    (['trace', 't_1'], ['doccp', 'densityNN', 'hophop']),
+    
+    # Five Terms
+    #(['trace', 't_1'], ['doccp', 'sisj', 'densityNN']),
+    #(['trace', 't_1', 't_2'], ['doccp', 'densityNN']),
+    #(['trace', 't_1'], ['doccp', 'densityNN', 'denhop_three_NN']),
+    #(['trace', 't_1'], ['doccp', 'densityNN', 'hophop_four_NN_1']),
+    #(['trace', 't_1'], ['doccp', 'densityNN', 'hophop_four_NN_2']),
+    #(['trace', 't_1'], ['doccp', 'densityNN', 'hophop']),
 ]
 param_function_sets = [
-    {'trace':'independent', 'e_end':'independent', 'e_center':'independent', 'doccp':'independent', 't_1':'independent', 't_2':'independent', 't_3':'independent', 'v':'independent', 'sisj':'independent', 'densityNN':'independent', 'exchange':'independent', 'hophop':'independent', 'denhop_three_NN':'independent', 'denhop_two_NN':'independent', 'hophop_four_NN_1':'independent', 'hophop_four_NN_2':'independent', 'hophop_three_NN':'independent'},
+    {'trace':'independent', 'e_end':'independent', 'e_center':'independent', 'doccp':'independent', 
+     't_1':'independent', 't_2':'independent', 't_3':'independent', 'v':'independent', 'sisj':'independent',
+     'densityNN':'independent', 'exchange':'independent', 'hophop':'independent', 'denhop_three_NN':'independent',
+     'denhop_two_NN':'independent', 'hophop_four_NN_1':'independent', 'hophop_four_NN_2':'independent', 
+     'hophop_three_NN':'independent'},
+
 #    {'trace':'func_E0', 'doccp':'independent', 't_1':'independent'},
 #    {'trace':'func_E0', 'doccp':'independent', 't_1':'polynomial5'},
 #    {'trace': 'func_E0', 'doccp': 'independent', 't_1': 'exponential'},
@@ -57,7 +60,7 @@ ws = [
 ]
 
 betas = [
-        0.05, 0.1, 0.125, 0.15, 0.2, 0.3, 0.4, 0.6, 0.8#, 0.5, 1.0, 2.0
+        0.05, 0.1, 0.125, 0.15, 0.2, 0.3, 0.4, 0.6, 0.8, 1.0, 2.0, 4.0#, 0.5, 1.0, 2.0
          #0.1, 0.15, 0.2, 0.3, 0.4, 0.6, 0.8, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0,
          ]
 

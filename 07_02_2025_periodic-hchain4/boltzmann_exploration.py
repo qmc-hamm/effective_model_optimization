@@ -59,7 +59,7 @@ def runCV(named_terms,
 
     #print(ai_df_rs)
 
-    matches = ['trace', 't_1', 't_2', 'doccp', 'sisj', 'sisjNNN'] #onebody_params + twobody_params
+    matches = ['t_1', 'doccp', 'sisj', 'sisjNNN'] #onebody_params + twobody_params
     weights = [1 - w, w]
 
     loss_function.setup_train(
@@ -122,7 +122,7 @@ def runInference(named_terms,
         ai_df = ai_df.reset_index()
         ai_df_rs[f'r{r}'] = ai_df
 
-    matches = ['trace', 't_1', 't_2', 'doccp', 'sisj', 'sisjNNN'] #onebody_params + twobody_params
+    matches = ['t_1', 'doccp', 'sisj', 'sisjNNN'] #onebody_params + twobody_params
 
     params_dict = {}
 

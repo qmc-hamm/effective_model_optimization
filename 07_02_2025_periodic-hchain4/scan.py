@@ -9,22 +9,22 @@ import mlflow
 parameter_sets = [
     # Three terms
     (['trace', 't_1'], ['doccp']),
-    (['trace'], ['sisj', 'doccp']),
-    (['trace'], ['doccp', 'hophop']),
-    (['trace'], ['doccp', 'denhop_three_NN']),
-    (['trace'], ['doccp', 'denhop_two_NN']),
-    (['trace'], ['doccp', 'hophop_three_NN']),
+    #(['trace'], ['sisj', 'doccp']),
+    #(['trace'], ['doccp', 'hophop']),
+    #(['trace'], ['doccp', 'denhop_three_NN']),
+    #(['trace'], ['doccp', 'denhop_two_NN']),
+    #(['trace'], ['doccp', 'hophop_three_NN']),
 
     # Four Terms
-    #(['trace', 't_1'], ['doccp', 'sisj']),
-    #(['trace', 't_1'], ['doccp', 'densityNN']),
-    #(['trace', 't_1', 't_2'], ['doccp']),
+    (['trace', 't_1'], ['doccp', 'sisj']),
+    (['trace', 't_1'], ['doccp', 'densityNN']),
+    (['trace', 't_1', 't_2'], ['doccp']),
     #(['trace', 't_1'], ['doccp', 'hophop']),
     #(['trace', 't_1'], ['doccp', 'hophop_four_NN_1']),
     #(['trace', 't_1'], ['doccp', 'hophop_four_NN_2']),
     
     # Five Terms
-    #(['trace', 't_1'], ['doccp', 'sisj', 'densityNN']),
+    (['trace', 't_1'], ['doccp', 'sisj', 'densityNN']),
     #(['trace', 't_1', 't_2'], ['doccp', 'densityNN']),
     #(['trace', 't_1'], ['doccp', 'densityNN', 'denhop_three_NN']),
     #(['trace', 't_1'], ['doccp', 'densityNN', 'hophop_four_NN_1']),
@@ -44,7 +44,7 @@ param_function_sets = [
 ]
 rs_set = [
     #[2.0, 2.2, 2.4, 2.6, 2.8, 3.0, 3.2, 3.6, 4.0, 4.4, 5.0]
-    [3.6] # 3.0
+    [3.2, 4.0, 4.8] # 3.0
     #[2.2, 2.8, 3.2, 3.6, 4.0, 4.4]  # Test Workflow
 ]
 state_cutoffs = [
@@ -56,7 +56,7 @@ ws = [
     #1.0, 0.9, 0.8, 0.7, 0.6
 #    1.0, 0.95, 0.9, 0.85, 0.8
 #    1.0, 0.9, 0.8, 0.7, 0.6
-    0.2#, 0.1, 0.2, 0.3, 0.4  # Test Workflow 0.4
+    0.05 #, 0.1, 0.2, 0.3, 0.4  # Test Workflow 0.4
 ]
 
 betas = [

@@ -10,7 +10,7 @@ import loss_function_function as loss_function
 from plot_model import plot_model
 from plot_thermo import plot_thermo
 
-all_rs = [2.0, 2.2, 2.4, 2.6, 2.8, 3.0, 3.2, 3.6, 4.0, 4.4, 5.0] # all ai_data rs
+all_rs = [2.0, 2.2, 2.4, 2.6, 2.8, 3.0, 3.2, 3.6, 4.0, 4.4, 4.8, 5.0] # all ai_data rs
 
 
 def runCV(named_terms,
@@ -162,6 +162,8 @@ def main(parameters, state_cutoff, w, beta, train_rs, niter_opt, tol_opt, maxfev
             for i in range(nCV_iter):
                 pname = make_name(parameters)
                 df = df[df['model_name'] == pname]
+                df = df[np.isin(df['r'], train_rs)]
+                df = df.sort_values(by='r', ascending=True)
                 dirname = os.path.join(output_dir, f"func_model_data_{state_cutoff}_{w}")
                 if not os.path.exists(dirname):
                     os.makedirs(dirname)
@@ -213,7 +215,7 @@ def main(parameters, state_cutoff, w, beta, train_rs, niter_opt, tol_opt, maxfev
                       p=0, # Set to 0, no CV for now
                       state_cutoff=state_cutoff,  #state_cutoff,
                       lamb=lamb,
-                      guess_params=None,#df,
+                      guess_params=df,
                       niter_opt=niter_opt,
                       tol_opt=tol_opt,
                       maxfev_opt=maxfev_opt

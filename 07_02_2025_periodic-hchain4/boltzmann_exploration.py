@@ -59,7 +59,7 @@ def runCV(named_terms,
 
     #print(ai_df_rs)
 
-    matches = ['t_1', 'doccp', 'sisj', 'sisjNNN'] #onebody_params + twobody_params
+    matches = ['t_1', 'doccp', 'sisj'] #onebody_params + twobody_params
     weights = [1 - w, w]
 
     loss_function.setup_train(
@@ -122,7 +122,7 @@ def runInference(named_terms,
         ai_df = ai_df.reset_index()
         ai_df_rs[f'r{r}'] = ai_df
 
-    matches = ['t_1', 'doccp', 'sisj', 'sisjNNN'] #onebody_params + twobody_params
+    matches = ['t_1', 'doccp', 'sisj'] #onebody_params + twobody_params
 
     params_dict = {}
 
@@ -205,7 +205,7 @@ def main(parameters, state_cutoff, w, beta, train_rs, niter_opt, tol_opt, maxfev
                 runCV(named_terms="hchain6_named_operators.hdf5",
                       ai_dir=f"ai_data/ai_descriptors_natoms6_nMO{nMOs}_basis{basis}.csv",
                       model_descriptors=model_file_path,
-                      nroots=250,
+                      nroots=150,
                       onebody_params=parameters[0],
                       twobody_params=parameters[1],
                       train_rs=train_rs,

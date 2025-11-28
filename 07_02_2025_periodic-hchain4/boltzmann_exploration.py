@@ -163,7 +163,12 @@ def main(parameters, state_cutoff, w, beta, train_rs, niter_opt, tol_opt, maxfev
                 pname = make_name(parameters)
                 df = df[df['model_name'] == pname]
                 df = df[np.isin(df['r'], train_rs)]
-                df = df.sort_values(by='r', ascending=True)
+                df = df[df['beta'] == beta]
+                if df.empty:
+                    df = None
+                else:
+                    df = df.sort_values(by='r', ascending=True)
+                #print(df) # to-do: put in warning statement if df has multiple entries for same r and beta and model_name
                 dirname = os.path.join(output_dir, f"func_model_data_{state_cutoff}_{w}")
                 if not os.path.exists(dirname):
                     os.makedirs(dirname)

@@ -12,6 +12,7 @@ parameter_sets = [
     #(['trace'], ['sisj', 'doccp']),
     #(['trace'], ['doccp', 'hophop']),
     #(['trace'], ['doccp', 'density_hopNN']),
+    #(['trace'], ['doccp', 'density_NN_hopNN']),
     #(['trace'], ['doccp', 'hopNN_hopNN_ijik']),
     #(['trace'], ['doccp', 'hopNN_hopNN_ijjk']),
     #(['trace'], ['doccp', 'ring_ijkl']),
@@ -22,15 +23,16 @@ parameter_sets = [
     #(['trace', 't_1'], ['doccp', 'densityNN']),
     #(['trace', 't_1', 't_2'], ['doccp']),
     #(['trace', 't_1'], ['doccp', 'hophop']),
+    (['trace', 't_1'], ['doccp', 'density_NN_hopNN']),
+    (['trace', 't_1'], ['doccp', 'density_hopNN']),
     (['trace', 't_1'], ['doccp', 'hopNN_hopNN_ijik']),
     (['trace', 't_1'], ['doccp', 'hopNN_hopNN_ijjk']),
-    (['trace', 't_1'], ['doccp', 'density_hopNN']),
     (['trace', 't_1'], ['doccp', 'ring_ijkl']),
     (['trace', 't_1'], ['doccp', 'ring_ijlk']),
     
     # Five Terms
     #(['trace', 't_1'], ['doccp', 'sisj', 'densityNN']),
-    (['trace', 't_1'], ['doccp', 'densityNN', 'densityNNN']),
+    #(['trace', 't_1'], ['doccp', 'densityNN', 'densityNNN']),
     #(['trace', 't_1', 't_2'], ['doccp', 'densityNN']),
     #(['trace', 't_1'], ['doccp', 'densityNN', 'denhop_three_NN']),
     #(['trace', 't_1'], ['doccp', 'densityNN', 'hophop_four_NN_1']),
@@ -41,8 +43,8 @@ param_function_sets = [
     {'trace':'independent', 'e_end':'independent', 'e_center':'independent', 'doccp':'independent', 
      't_1':'independent', 't_2':'independent', 't_3':'independent', 'v':'independent', 'sisj':'independent',
      'densityNN':'independent', 'exchange':'independent', 'hophop':'independent', 
-     'density_hopNN':'independent', 'hopNN_hopNN_ijik':'independent', 'hopNN_hopNN_ijjk':'independent', 
-     'ring_ijkl':'independent', 'ring_ijlk':'independent', 'densityNNN':'independent'},
+     'density_hopNN':'independent', 'density_NN_hopNN':'independent', 'hopNN_hopNN_ijik':'independent',
+     'hopNN_hopNN_ijjk':'independent', 'ring_ijkl':'independent', 'ring_ijlk':'independent', 'densityNNN':'independent'},
 
 #    {'trace':'func_E0', 'doccp':'independent', 't_1':'independent'},
 #    {'trace':'func_E0', 'doccp':'independent', 't_1':'polynomial5'},
@@ -50,7 +52,7 @@ param_function_sets = [
 ]
 rs_set = [
     #[2.0, 2.2, 2.4, 2.6, 2.8, 3.0, 3.2, 3.6, 4.0, 4.4, 5.0]
-    [3.2, 4.0, 4.8] # 3.0
+    [3.2, 4.8] # 3.0
     #[4.0, 4.4, 4.8]
     #[4.8]
     #[2.2, 2.8, 3.2, 3.6, 4.0, 4.4]  # Test Workflow
@@ -61,12 +63,13 @@ state_cutoffs = [
     50
 ]
 ws = [
-    0.1
+    0.0
     #0.05 #, 0.1, 0.2, 0.3, 0.4  # Test Workflow 0.4
 ]
 
 betas = [
-        0.05, 0.1, 0.2
+        0.125, 0.15, 0.3, 0.4, 0.6, 0.8, 1.0
+        #0.05, 0.1, 0.2
         #0.05, 0.1, 0.125, 0.15, 0.175, 0.2, 0.25, 0.3, 0.4, 0.6, 0.8# 1.0, 2.0, 4.0#, 0.5, 1.0, 2.0
         #1.0,
         #2.0, 4.0

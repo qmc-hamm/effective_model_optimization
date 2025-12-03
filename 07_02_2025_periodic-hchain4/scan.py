@@ -5,7 +5,6 @@ from typing import Optional, Dict, Union, List
 
 import mlflow
 
-# Hyperparameters   ['density_hopNN', 'hopNN_hopNN_ijik', 'hopNN_hopNN_ijjk', 'ring_ijkl', 'ring_ijlk', 'densityNNN']
 parameter_sets = [
     # Three terms
     #(['trace', 't_1'], ['doccp']),
@@ -19,10 +18,10 @@ parameter_sets = [
     #(['trace'], ['doccp', 'ring_ijlk']),
 
     # Four Terms
-    #(['trace', 't_1'], ['doccp', 'sisj']),
+    (['trace', 't_1'], ['doccp', 'sisj']),
     #(['trace', 't_1'], ['doccp', 'densityNN']),
-    #(['trace', 't_1', 't_2'], ['doccp']),
-    #(['trace', 't_1'], ['doccp', 'hophop']),
+    (['trace', 't_1', 't_2'], ['doccp']),
+    (['trace', 't_1'], ['doccp', 'hophop']),
     (['trace', 't_1'], ['doccp', 'density_NN_hopNN']),
     (['trace', 't_1'], ['doccp', 'density_hopNN']),
     (['trace', 't_1'], ['doccp', 'hopNN_hopNN_ijik']),
@@ -51,30 +50,24 @@ param_function_sets = [
 #    {'trace': 'func_E0', 'doccp': 'independent', 't_1': 'exponential'},
 ]
 rs_set = [
-    #[2.0, 2.2, 2.4, 2.6, 2.8, 3.0, 3.2, 3.6, 4.0, 4.4, 5.0]
-    [3.2, 4.8] # 3.0
-    #[4.0, 4.4, 4.8]
-    #[4.8]
-    #[2.2, 2.8, 3.2, 3.6, 4.0, 4.4]  # Test Workflow
+    [3.2, 4.8] 
+    #[2.8, 3.2, 3.6, 4.0, 4.4, 4.8]  # Test Workflow
 ]
 state_cutoffs = [
     #None # Test Workflow
-    #14 #8, 10, 12, 14
     50
 ]
 ws = [
-    0.0
-    #0.05 #, 0.1, 0.2, 0.3, 0.4  # Test Workflow 0.4
+    0.05
+    #0.05, 0.1, 0.2, 0.3, 0.4  # Test Workflow 
 ]
 
 betas = [
-        0.125, 0.15, 0.3, 0.4, 0.6, 0.8, 1.0
+        0.1, 0.125, 0.15, 0.3, 0.4, 0.6, 0.8, 1.0
         #0.05, 0.1, 0.2
         #0.05, 0.1, 0.125, 0.15, 0.175, 0.2, 0.25, 0.3, 0.4, 0.6, 0.8# 1.0, 2.0, 4.0#, 0.5, 1.0, 2.0
-        #1.0,
-        #2.0, 4.0
-         #0.1, 0.15, 0.2, 0.3, 0.4, 0.6, 0.8, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0,
-         ]
+        #0.1, 0.15, 0.2, 0.3, 0.4, 0.6, 0.8, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0,
+        ]
 
 lambdas =[
     1.0

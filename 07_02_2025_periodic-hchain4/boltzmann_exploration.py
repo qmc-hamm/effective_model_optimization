@@ -13,26 +13,74 @@ from plot_thermo import plot_thermo
 all_rs = [2.0, 2.2, 2.4, 2.6, 2.8, 3.0, 3.2, 3.6, 4.0, 4.4, 4.8, 5.0] # all ai_data rs
 
 
-def runCV(named_terms,
-          ai_dir,
-          model_descriptors,
-          nroots,
-          onebody_params,
-          twobody_params,
-          train_rs,
-          param_functions,
-          minimum_1s_occupation=3.7,
-          w=0.0,
-          beta=0.0,
-          p=1,
-          guess_params=None,
-          state_cutoff=None,
-          lamb=1.0,
-          niter_opt=2,
-          tol_opt=1e-2,
-          maxfev_opt=1000.0,
+def runCV(named_terms: str,
+          ai_dir: str,
+          model_descriptors: str,
+          nroots: int,
+          onebody_params: list[str],
+          twobody_params: list[str],
+          train_rs: list[float],
+          param_functions: list[str],
+          minimum_1s_occupation: float = 0.91,
+          w: float = 0.0,
+          beta: float = 0.0,
+          p: int = 1,
+          guess_params: list[float] = None,
+          state_cutoff: int = None,
+          lamb: float = 1.0,
+          niter_opt: int = 1000,
+          tol_opt: float = 1e-7,
+          maxfev_opt: int = 10000,
           tmpdirname=None
           ):
+    """ Wrapper function that optimizes an effective model using loss_function.py.
+
+    Parameters
+    ----------
+    named_terms : str
+        File that holds the onebody and twobody terms.
+    ai_dir : str
+        File that holds the ab initio data. The descriptor information of the ab initio data. The keys should match model descriptors
+    model_descriptors : str
+        Name of file to store model in hdf5 format.
+    nroots : int
+        Number of roots to solve the effective model for.
+    onebody_params :list[str]
+        List of the key names for the onebody parameters.
+    twobody_params : list[str]
+        List of the key names for the twobody parameters.
+    train_rs : list[float]
+        List of the atomic spacing, r, to optimize over.
+    param_functions : list[str]
+        The function type of the parameter vs r function.
+    minimum_1s_occupation : float, optional
+        The minimum occupancy per site in the target space, by default 0.91.
+    w : float, optional
+        The ratio of descriptor to spectrum loss value, by default 0.0.
+    beta : float, optional
+        Boltmann beta for boltmann weighting term, by default 0.0.
+    p : int, optional
+        Number of states to leave out as validation, by default 1.
+    guess_params : list[float], optional
+        Guess parameter values to use for optimizition. If None uses DMD guess values instead. By default None.
+    state_cutoff : int, optional
+        The state number of ab initio data that is the cutoff value, by default None.
+    lamb : float, optional
+        Strength of the intruder state penalty term, by default 1.0.
+    niter_opt : int, optional
+        Number of optimization iterations, by default 2. Passed into scipy.optimize.
+    tol_opt : float, optional
+        Tolerance of optimization, by default 1e-2. Passed into scipy.optimize.
+    maxfev_opt : int, optional
+        Maximum function call by optimization procedure, by default 1000.0. Passed into scipy.optimize.
+    tmpdirname : _type_, optional
+        _description_, by default None
+
+    Returns
+    -------
+    float
+        Loss function dictionary.
+    """
 
     onebody = {}
     twobody = {}
@@ -51,15 +99,15 @@ def runCV(named_terms,
         ai_df = pd.read_csv(ai_dir)
         ai_df = ai_df[ai_df.r == r]
         ai_df = ai_df[ai_df.delta == 0.0]
-        ai_df = ai_df[ai_df.trace >= len(onebody['trace'])*0.91]
+        ai_df = ai_df[ai_df.trace >= len(onebody['trace'])*minimum_1s_occupation]
         if state_cutoff is not None:
             ai_df = ai_df[ai_df.state < state_cutoff]
         ai_df = ai_df.reset_index()
         ai_df_rs[f'r{r}'] = ai_df
 
-    #print(ai_df_rs)
+    # print("ab initio dataframe", ai_df_rs)
 
-    matches = ['t_1', 'doccp', 'sisj'] #onebody_params + twobody_params
+    matches = ['t_1', 'doccp', 'sisj']  # onebody_params + twobody_params
     weights = [1 - w, w]
 
     loss_function.setup_train(
@@ -84,20 +132,59 @@ def runCV(named_terms,
     )
 
 
-def runInference(named_terms,
-                 ai_dir,
-                 model_descriptors,
-                 inference_name,
-                 nroots,
-                 onebody_params,
-                 twobody_params,
-                 rs,
-                 beta,
-                 minimum_1s_occupation=3.7,
-                 state_cutoff=None,
-                 lamb=1.0,
+def runInference(named_terms: str,
+                 ai_dir: str,
+                 model_descriptors: str,
+                 inference_name: str,
+                 nroots: int,
+                 onebody_params: list[str],
+                 twobody_params: list[str],
+                 rs: list[float],
+                 w: float = 0.1,
+                 beta: float = 0.0,
+                 minimum_1s_occupation: float = 0.91,
+                 state_cutoff: int = None,
+                 lamb: float = 1.0,
                  tmpdirname=None
                  ):
+    """ Evaluates an inference of a given model with w=0.1.
+
+    Parameters
+    ----------
+    named_terms : str
+        File that holds the onebody and twobody terms.
+    ai_dir : str
+        File that holds the ab initio data. The descriptor information of the ab initio data. The keys should match model descriptors
+    model_descriptors : str
+        Name of file to store model in hdf5 format.
+    inference_name : str
+        Name of group inside hdf5 file to store inference evaluation.
+    nroots : int
+        Number of roots to solve the effective model for.
+    onebody_params :list[str]
+        List of the key names for the onebody parameters.
+    twobody_params : list[str]
+        List of the key names for the twobody parameters.
+    train_rs : list[float]
+        List of the atomic spacing, r, to optimize over.
+    param_functions : str
+        The function type of the parameter vs r function.
+    w : float, optional
+        The ratio of descriptor to spectrum loss value, by default 0.1.
+    beta : float, optional
+        Boltmann beta for boltmann weighting term, by default 0.0.
+    minimum_1s_occupation : float, optional
+        The minimum occupancy per site in the target space, by default 0.91
+    state_cutoff : int, optional
+        The state number of ab initio data that is the cutoff value, by default None.
+    lamb : float, optional
+        Strength of the intruder state penalty term, by default 1.0.
+
+    Returns
+    -------
+    float
+        Loss function dictionary.
+    """
 
     onebody = {}
     twobody = {}
@@ -116,13 +203,14 @@ def runInference(named_terms,
         ai_df = pd.read_csv(ai_dir)
         ai_df = ai_df[ai_df.r == r]
         ai_df = ai_df[ai_df.delta == 0.0]
-        ai_df = ai_df[ai_df.trace >= len(onebody['trace'])*0.91]
+        ai_df = ai_df[ai_df.trace >= len(onebody['trace'])*minimum_1s_occupation]
         if state_cutoff is not None:
             ai_df = ai_df[ai_df.state < state_cutoff]
         ai_df = ai_df.reset_index()
         ai_df_rs[f'r{r}'] = ai_df
 
-    matches = ['t_1', 'doccp', 'sisj'] #onebody_params + twobody_params
+    matches = ['t_1', 'doccp', 'sisj']  # onebody_params + twobody_params
+    weights = [1 - w, w]
 
     params_dict = {}
 
@@ -144,6 +232,7 @@ def runInference(named_terms,
         model_descriptors,
         matches,
         rs,
+        weights,
         beta,
         params_dict,
         lamb=lamb,
@@ -218,7 +307,7 @@ def main(parameters, state_cutoff, w, beta, train_rs, niter_opt, tol_opt, maxfev
                       w=w,
                       beta=beta,
                       p=0, # Set to 0, no CV for now
-                      state_cutoff=state_cutoff,  #state_cutoff,
+                      state_cutoff=state_cutoff,
                       lamb=lamb,
                       guess_params=df,
                       niter_opt=niter_opt,
@@ -264,7 +353,7 @@ def main(parameters, state_cutoff, w, beta, train_rs, niter_opt, tol_opt, maxfev
                 mlflow.log_artifact(model_file_path)
                 model_files.append(model_file_path)
             plot_model(output_dir, model_files, [f"natoms6_casci_nMO{nMOs}_basis{basis}"], parameters)
-            plot_thermo(output_dir, model_files, [f"natoms6_casci_nMO{nMOs}_basis{basis}"], [f"ai_data/ai_descriptors_natoms6_nMO{nMOs}_basis{basis}.csv"], parameters)
+            # plot_thermo(output_dir, model_files, [f"natoms6_casci_nMO{nMOs}_basis{basis}"], [f"ai_data/ai_descriptors_natoms6_nMO{nMOs}_basis{basis}.csv"], parameters)
 
 
 if __name__ == "__main__":
@@ -293,21 +382,7 @@ if __name__ == "__main__":
         state_cutoff = None
     else:
         state_cutoff = int(args.state_cutoff)
-    
-    print(parameters[1])
-    #if 'densityNN' in parameters[1]:
-    #   w = 0.02
-    #elif 'denhop_three_NN' in parameters[1]:
-    #   w = 0.02
-    #elif 'denhop_two_NN' in parameters[1]:
-    #   w = 0.02
-    #elif 'hophop_four_NN_1' in parameters[1]:
-    #    w = 0.02
-    #elif 'hophop_four_NN_2' in parameters[1]:
-    #    w = 0.02
-    #elif 'hophop_three_NN' in parameters[1]:
-    #    w = 0.02
-    # else:
+
     w = args.w
     beta = args.beta
     lamb = args.lamb

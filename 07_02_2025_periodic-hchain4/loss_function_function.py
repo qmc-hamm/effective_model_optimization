@@ -634,6 +634,56 @@ def setup_train(
     tol_opt=1e-7,
     maxfev_opt=10000,
 ):
+    """ Sets up training of model for optimization.
+
+    Parameters
+    ----------
+    onebody : dict
+        Dictionary of the onebody operators.
+    twobody : dict
+        Dictionary of the twobody operators.
+    onebody_params : list[str]
+        List of the key names for the onebody parameters.
+    twobody_params : list[str]
+        List of the key names for the twobody parameters.
+    ai_df_rs : dict[str, pd.DataFrame]
+        Dictionary of descriptor information of the ab initio data as each atomic spacing, r. The keys should match model descriptors.
+    nroots : int
+        Number of roots to solve the effective model for.
+    outfile : str
+        Name of file to store model in hdf5 format.
+    matches : list[str]
+        List of descriptors to used for matching/mapping process.
+    train_rs : list[float]
+        List of the atomic spacing, r, to optimize over.
+    param_functions : list[str]
+        The function type of the parameter vs r function.
+    weights : list
+        [1-w, w], where w is the ratio of descriptor to spectrum loss value, by default 0.0.
+    beta : float
+        Boltmann beta for boltmann weighting term, by default 0.0.
+    p : int
+        Number of states to leave out as validation, by default 1.
+    guess_params : list[float], optional
+        Guess parameter values to use for optimizition. If None uses DMD guess values instead. By default None.
+    lamb : float, optional
+        Strength of the intruder state penalty term, by default 1.0
+    clip_val : int, optional
+        Normalization factor of descriptors clip, by default 1.
+    niter_opt : int, optional
+        Number of optimization iterations, by default 1000. Passed into scipy.optimize.
+    tol_opt : float, optional
+        Tolerance of optimization, by default 1e-7. Passed into scipy.optimize.
+    maxfev_opt : int, optional
+        Maximum function call by optimization procedure, by default 10000. Passed into scipy.optimize.
+
+    Returns
+    -------
+    float
+        Loss function dictionary.
+    """
+
+    print("\nStart Model Training =================================")
     print("Beta, weights", beta, weights)
     ai_df_train_rs = {}
     max_ai_energy_rs = {}
@@ -671,34 +721,6 @@ def setup_train(
             fitted_ground_state_energy += dmd.params[param] * ai_df[param][0]
 
         dmd_train_rs_params[E0_ind][i] = (ai_df["energy"][0] - fitted_ground_state_energy) / onebody[onebody_params[0]].shape[0]  # divide by number the number of sites ; make generic
-
-    """ # TEST RANDOM STARTING PLACE
-    for i, r in enumerate(train_rs):
-        for j, param in enumerate(onebody_params + twobody_params):
-            if param == 'trace':
-                dmd_train_rs_params[j][i] = np.random.uniform(-17, -10, 1)
-            if param == 'e_center':
-                dmd_train_rs_params[j][i] = np.random.uniform(-15, -10, 1)
-            if param == 'e_end':
-                dmd_train_rs_params[j][i] = np.random.uniform(-15, -10, 1)
-            if param == 't_1':
-                dmd_train_rs_params[j][i] = np.random.uniform(-4, 0, 1)
-            if param == 't_2':
-                dmd_train_rs_params[j][i] = np.random.uniform(0, 0.5, 1)
-            if param == 't_3':
-                dmd_train_rs_params[j][i] = np.random.uniform(-1, 1, 1)
-            if param == 'doccp':
-                dmd_train_rs_params[j][i] = np.random.uniform(8, 12, 1)
-            if param == 'v':
-                dmd_train_rs_params[j][i] = np.random.uniform(-2, 2, 1)
-            if param == 'sisj':
-                dmd_train_rs_params[j][i] = np.random.uniform(-0.5, 0, 1)
-            if param == 'densityNN':
-                dmd_train_rs_params[j][i] = np.random.uniform(0, 3, 1)
-            if param == 'exchange':
-                dmd_train_rs_params[j][i] = np.random.uniform(0.0, 0.5, 1)
-            if param == 'hophop':
-                dmd_train_rs_params[j][i] = np.random.uniform(0, 2, 1) """
 
     print("DMD parameters for train_rs: ", onebody_params + twobody_params)
     print(dmd_train_rs_params)
@@ -747,7 +769,7 @@ def setup_train(
     keys = dmd.params.keys()
 
     # OPTMIZATION LOOP START
-    print("Starting optimization")
+    print("Starting optimization -------------------------------")
 
     xmin0 = minimize(
         optimize_CV_para_function,
@@ -777,7 +799,7 @@ def setup_train(
         options={"maxiter": niter_opt, "maxfev": maxfev_opt, 'disp': True, 'return_all':True},
     )
     
-    print("\nStarting final w=0 optimization ---")
+    print("\nStarting final w=0 optimization ------------------------")
     x0 = xmin0.x
 
     print(f"function value with weights {weights} : ", xmin0.fun)
@@ -814,7 +836,7 @@ def setup_train(
     print(f"final - function value with pure spectrum weighting: ", xmin.fun)
     print(f"final - parameters with pure spectrum weighting : ", xmin.x)
 
-    print("\nEvaluate train data after optimization ----")
+    print("\nEvaluate train data after optimization --------------------")
     data = evaluate_loss_CV_para_function(xmin.x,
                                           x0_ind,
                                           param_functions,
@@ -895,11 +917,52 @@ def inference(
     outfile: str,
     matches: list,
     rs: list,
+    weights: list[float, float],
     beta: float,
     params_dict: dict[str, list],
     lamb: float = 1.0,
     clip_val=1,
 ):
+    """Sets up a single evaluation of model and writes the result to the model file given.
+
+    Parameters
+    ----------
+    onebody : dict
+        Dictionary of the onebody operators.
+    twobody : dict
+        Dictionary of the twobody operators.
+    onebody_params : list[str]
+        List of the key names for the onebody parameters.
+    twobody_params : list[str]
+        List of the key names for the twobody parameters.
+    ai_df_rs : dict[str, pd.DataFrame]
+        Dictionary of descriptor information of the ab initio data as each atomic spacing, r. The keys should match model descriptors.
+    inference_name : str
+        Name of the group that the data is stored under in the model file.
+    nroots : int
+        Number of roots to solve the effective model for.
+    outfile : str
+        Name of file to store model in hdf5 format.
+    matches : list[str]
+        List of descriptors to used for matching/mapping process.
+    rs : list
+        List of the atomic spacing, r, to evaluate over.
+    weights : list[float, float]
+        [1-w, w], where w is the ratio of descriptor to spectrum loss value, by default 0.0.
+    beta : float
+        Boltmann beta for boltmann weighting term, by default 0.0.
+    params_dict : dict[str, list]
+        Guess parameter values to use for optimizition. If None uses DMD guess values instead. By default None.
+    lamb : float, optional
+        Strength of the intruder state penalty term, by default 1.0
+    clip_val : int, optional
+        Normalization factor of descriptors clip, by default 1.
+    
+    Returns
+    -------
+    Nothing.
+    """
+
     max_ai_energy_rs = {}
     norm_rs = {}
     natoms = onebody[onebody_params[0]].shape[0]
@@ -928,7 +991,7 @@ def inference(
     for r in rs:
         data[f'r{r}'] = evaluate_loss(params_dict[f'r{r}'],
                                       onebody_params+twobody_params,
-                                      [0.9, 0.1],
+                                      weights,
                                       boltzmann_weights_rs[f'r{r}'],
                                       onebody,
                                       twobody,

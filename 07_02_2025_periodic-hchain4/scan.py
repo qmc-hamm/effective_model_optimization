@@ -21,7 +21,8 @@ parameter_sets = [
     #(['trace', 't_1'], ['doccp', 'sisj']),
     #(['trace', 't_1'], ['doccp', 'densityNN']),
     #(['trace', 't_1', 't_2'], ['doccp']),
-    #(['trace', 't_1'], ['doccp', 'hophop']),
+    (['trace', 't_1'], ['doccp', 'hophop']),
+    (['trace', 't_1'], ['doccp', 'exchange']),
     #(['trace', 't_1'], ['doccp', 'density_NN_hopNN']),
     #(['trace', 't_1'], ['doccp', 'density_hopNN']),
     #(['trace', 't_1'], ['doccp', 'hopNN_hopNN_ijik']),
@@ -31,9 +32,9 @@ parameter_sets = [
     
     # Five Terms
     (['trace', 't_1'], ['doccp', 'densityNN', 'hophop']),
-    (['trace', 't_1'], ['doccp', 'densityNN', 'hopNN_hopNN_ijjk']),
-    (['trace', 't_1'], ['doccp', 'densityNN', 'ring_ijkl']),
-    (['trace', 't_1'], ['doccp', 'densityNN', 'ring_ijlk']),
+    #(['trace', 't_1'], ['doccp', 'densityNN', 'hopNN_hopNN_ijjk']),
+    #(['trace', 't_1'], ['doccp', 'densityNN', 'ring_ijkl']),
+    #(['trace', 't_1'], ['doccp', 'densityNN', 'ring_ijlk']),
     #(['trace', 't_1'], ['doccp', 'sisj', 'densityNN']),
     #(['trace', 't_1'], ['doccp', 'densityNN', 'densityNNN']),
     #(['trace', 't_1', 't_2'], ['doccp', 'densityNN']),

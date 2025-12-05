@@ -250,13 +250,14 @@ def main(parameters, state_cutoff, w, beta, train_rs, niter_opt, tol_opt, maxfev
             model_files = []
             for i in range(nCV_iter):
                 pname = make_name(parameters)
-                df = df[df['model_name'] == pname]
-                df = df[np.isin(df['r'], train_rs)]
-                df = df[df['beta'] == beta]
-                if df.empty:
-                    df = None
+                df_tmp = df.copy()
+                df_tmp = df_tmp[df_tmp['model_name'] == pname]
+                df_tmp = df_tmp[np.isin(df_tmp['r'], train_rs)]
+                df_tmp = df_tmp[df_tmp['beta'] == beta]
+                if df_tmp.empty:
+                    df_tmp = None
                 else:
-                    df = df.sort_values(by='r', ascending=True)
+                    df_tmp = df_tmp.sort_values(by='r', ascending=True)
                 #print(df) # to-do: put in warning statement if df has multiple entries for same r and beta and model_name
                 dirname = os.path.join(output_dir, f"func_model_data_{state_cutoff}_{w}")
                 if not os.path.exists(dirname):
@@ -306,10 +307,10 @@ def main(parameters, state_cutoff, w, beta, train_rs, niter_opt, tol_opt, maxfev
                       param_functions=param_functions,
                       w=w,
                       beta=beta,
-                      p=0, # Set to 0, no CV for now
+                      p=1, # Set to 0, no CV for now
                       state_cutoff=state_cutoff,
                       lamb=lamb,
-                      guess_params=df,
+                      guess_params=df_tmp,
                       niter_opt=niter_opt,
                       tol_opt=tol_opt,
                       maxfev_opt=maxfev_opt

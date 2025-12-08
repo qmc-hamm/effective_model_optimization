@@ -307,7 +307,7 @@ def main(parameters, state_cutoff, w, beta, train_rs, niter_opt, tol_opt, maxfev
                       param_functions=param_functions,
                       w=w,
                       beta=beta,
-                      p=1, # Set to 0, no CV for now
+                      p=0, # Set to 0, no CV for now
                       state_cutoff=state_cutoff,
                       lamb=lamb,
                       guess_params=df_tmp,

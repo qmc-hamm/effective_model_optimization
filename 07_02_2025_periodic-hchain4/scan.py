@@ -7,7 +7,7 @@ import mlflow
 
 parameter_sets = [
     # Three terms
-    #(['trace', 't_1'], ['doccp']),
+    (['trace', 't_1'], ['doccp']),                           # 2_site term
     #(['trace'], ['sisj', 'doccp']),
     #(['trace'], ['doccp', 'hophop']),
     #(['trace'], ['doccp', 'density_hopNN']),
@@ -18,13 +18,13 @@ parameter_sets = [
     #(['trace'], ['doccp', 'ring_ijlk']),
 
     # Four Terms
-    (['trace', 't_1'], ['doccp', 'sisj']),
-    (['trace', 't_1'], ['doccp', 'densityNN']),
+    (['trace', 't_1'], ['doccp', 'sisj']),                   # 2_site term
+    (['trace', 't_1'], ['doccp', 'densityNN']),              # 2_site term
     #(['trace', 't_1', 't_2'], ['doccp']),
-    (['trace', 't_1'], ['doccp', 'hophop']),
+    (['trace', 't_1'], ['doccp', 'hophop']),                 # 2_site term
     #(['trace', 't_1'], ['doccp', 'exchange']),
     #(['trace', 't_1'], ['doccp', 'density_NN_hopNN']),
-    (['trace', 't_1'], ['doccp', 'density_hopNN']),
+    (['trace', 't_1'], ['doccp', 'density_hopNN']),          # 2_site term
     #(['trace', 't_1'], ['doccp', 'hopNN_hopNN_ijik']),
     #(['trace', 't_1'], ['doccp', 'hopNN_hopNN_ijjk']),
     #(['trace', 't_1'], ['doccp', 'ring_ijkl']),
@@ -56,7 +56,8 @@ param_function_sets = [
 #    {'trace': 'func_E0', 'doccp': 'independent', 't_1': 'exponential'},
 ]
 rs_set = [
-    [3.2, 4.8] 
+    #[3.2, 4.8] 
+    [4.8]
     #[2.8, 3.2, 3.6, 4.0, 4.4, 4.8]  # Test Workflow
 ]
 state_cutoffs = [
@@ -69,8 +70,9 @@ ws = [
 ]
 
 betas = [
-        0.1, 0.125, 0.15, 0.3, 0.4, 0.6, 0.8, 1.0
+        #0.1, 0.125, 0.15, 0.3, 0.4, 0.6, 0.8, 1.0
         #0.05, 0.1, 0.2
+        1.0, 2.0, 4.0, 8.0
         #0.05, 0.1, 0.125, 0.15, 0.175, 0.2, 0.25, 0.3, 0.4, 0.6, 0.8# 1.0, 2.0, 4.0#, 0.5, 1.0, 2.0
         #0.1, 0.15, 0.2, 0.3, 0.4, 0.6, 0.8, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0,
         ]

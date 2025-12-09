@@ -18,8 +18,8 @@ parameter_sets = [
     #(['trace'], ['doccp', 'ring_ijlk']),
 
     # Four Terms
-    (['trace', 't_1'], ['doccp', 'sisj']),                   # 2_site term
-    (['trace', 't_1'], ['doccp', 'densityNN']),              # 2_site term
+    #(['trace', 't_1'], ['doccp', 'sisj']),                   # 2_site term
+    #(['trace', 't_1'], ['doccp', 'densityNN']),              # 2_site term
     #(['trace', 't_1', 't_2'], ['doccp']),
     (['trace', 't_1'], ['doccp', 'hophop']),                 # 2_site term
     #(['trace', 't_1'], ['doccp', 'exchange']),
@@ -31,12 +31,12 @@ parameter_sets = [
     #(['trace', 't_1'], ['doccp', 'ring_ijlk']),
     
     # Five Terms
-    #(['trace', 't_1'], ['doccp', 'densityNN', 'hophop']),
-    #(['trace', 't_1'], ['doccp', 'densityNN', 'hophop', sisj]),
+    (['trace', 't_1'], ['doccp', 'densityNN', 'hophop']),               # 2 site term
+    #(['trace', 't_1'], ['doccp', 'densityNN', 'hophop', sisj]),        # 2 site term
     #(['trace', 't_1'], ['doccp', 'densityNN', 'hopNN_hopNN_ijjk']),
     #(['trace', 't_1'], ['doccp', 'densityNN', 'ring_ijkl']),
     #(['trace', 't_1'], ['doccp', 'densityNN', 'ring_ijlk']),
-    #(['trace', 't_1'], ['doccp', 'sisj', 'densityNN']),
+    #(['trace', 't_1'], ['doccp', 'sisj', 'densityNN']),                # 2 site term
     #(['trace', 't_1'], ['doccp', 'densityNN', 'densityNNN']),
     #(['trace', 't_1', 't_2'], ['doccp', 'densityNN']),
     #(['trace', 't_1'], ['doccp', 'densityNN', 'denhop_three_NN']),
@@ -56,8 +56,8 @@ param_function_sets = [
 #    {'trace': 'func_E0', 'doccp': 'independent', 't_1': 'exponential'},
 ]
 rs_set = [
-    #[3.2, 4.8] 
-    [4.8]
+    [3.2, 4.8] 
+    #[4.8]
     #[2.8, 3.2, 3.6, 4.0, 4.4, 4.8]  # Test Workflow
 ]
 state_cutoffs = [
@@ -65,14 +65,14 @@ state_cutoffs = [
     50
 ]
 ws = [
-    0.05
+    0.01
     #0.05, 0.1, 0.2, 0.3, 0.4  # Test Workflow 
 ]
 
 betas = [
-        #0.1, 0.125, 0.15, 0.3, 0.4, 0.6, 0.8, 1.0
+        0.1, 0.125, 0.15, 0.3, 0.4, 0.6, 0.8, 1.0
         #0.05, 0.1, 0.2
-        1.0, 2.0, 4.0, 8.0
+        #1.0, 2.0, 4.0, 8.0
         #0.05, 0.1, 0.125, 0.15, 0.175, 0.2, 0.25, 0.3, 0.4, 0.6, 0.8# 1.0, 2.0, 4.0#, 0.5, 1.0, 2.0
         #0.1, 0.15, 0.2, 0.3, 0.4, 0.6, 0.8, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0,
         ]
